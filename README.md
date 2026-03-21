@@ -21,29 +21,96 @@ Full-stack stock market web app scaffold with Django, PostgreSQL, React, ML mode
 - deploy_scripts/
 - .github/workflows/
 
-## Backend Setup
+## Local Development
 
-1. Create env file:
-   - `copy backend/.env.example backend/.env`
-2. Install dependencies:
-   - `cd backend`
-   - `python -m venv venv`
-   - `venv\\Scripts\\activate` (Windows) or `source venv/bin/activate` (Linux)
-   - `pip install -r requirements.txt`
-3. Run migrations and server:
-   - `python manage.py makemigrations`
-   - `python manage.py migrate`
-   - `python manage.py createsuperuser`
-   - `python manage.py runserver`
+### Prerequisites
+- Python 3.12+
+- Node.js 20+
+- PostgreSQL 14+
 
-## Frontend Setup
+### Backend Setup
 
-1. Configure env:
-   - `copy frontend/.env.example frontend/.env`
-2. Install and run:
-   - `cd frontend`
-   - `npm install`
-   - `npm run dev`
+1. **Install PostgreSQL** (if not already installed):
+   - Windows: https://www.postgresql.org/download/windows/
+   - macOS: `brew install postgresql`
+   - Linux: `sudo apt install postgresql postgresql-contrib`
+
+2. **Create database**:
+   ```sql
+   createdb stockapp
+   createuser postgres -P  # Set password when prompted
+   psql stockapp
+   ALTER ROLE postgres WITH SUPERUSER;
+   \q
+   ```
+
+3. **Configure backend environment**:
+   ```bash
+   cd backend
+   copy .env.example .env  # Windows
+   # or
+   cp .env.example .env    # macOS/Linux
+   ```
+   
+   Edit `backend/.env` and set PostgreSQL credentials:
+   ```
+   DJANGO_DEBUG=True
+   POSTGRES_DB=stockapp
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=<your_password>
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   ```
+
+4. **Install Python dependencies**:
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate      # Windows
+   # or
+   source venv/bin/activate   # macOS/Linux
+   pip install -r requirements.txt
+   ```
+
+5. **Run Django setup**:
+   ```bash
+   python manage.py makemigrations
+   python manage.py migrate
+   python manage.py createsuperuser  # Create admin account
+   python manage.py runserver        # Runs on http://localhost:8000
+   ```
+
+### Frontend Setup
+
+1. **Configure frontend environment**:
+   ```bash
+   cd frontend
+   copy .env.example .env  # Windows
+   # or
+   cp .env.example .env    # macOS/Linux
+   ```
+
+2. **Install and run**:
+   ```bash
+   npm install
+   npm run dev              # Runs on http://localhost:5173
+   ```
+
+### Running Both Services (Local Development)
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+python manage.py runserver
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Visit `http://localhost:5173` to access the app. Backend API is at `http://localhost:8000/api`.
 
 ## API Highlights
 
