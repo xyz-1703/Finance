@@ -12,5 +12,6 @@ urlpatterns = [
     path("api/trading/", include("apps.trading.urls")),
     path("api/ml/", include("apps.mlops.urls")),
     path("api/admin/", include("apps.admin_api.urls")),
+    path("api/insights/", include("apps.insights.urls")),
     path("api/", include(router.urls)),
 ]

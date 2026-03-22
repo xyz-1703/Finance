@@ -1,8 +1,7 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
-    GoogleOAuthLoginView,
     ProfileView,
     SetMpinView,
     TelegramOtpRequestView,
@@ -11,7 +10,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path("google/", GoogleOAuthLoginView.as_view(), name="google-login"),
+    path("token/", TokenObtainPairView.as_view(), name="token-obtain-pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("profile/", ProfileView.as_view(), name="profile"),
     path("otp/request/", TelegramOtpRequestView.as_view(), name="otp-request"),

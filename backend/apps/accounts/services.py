@@ -4,14 +4,8 @@ from datetime import timedelta
 import requests
 from django.conf import settings
 from django.utils import timezone
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 
 from .models import User
-
-
-def verify_google_id_token(token: str) -> dict:
-    return id_token.verify_oauth2_token(token, google_requests.Request(), settings.GOOGLE_OAUTH_CLIENT_ID)
 
 
 def issue_otp(user: User) -> str:

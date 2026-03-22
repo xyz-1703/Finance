@@ -13,8 +13,9 @@ export default function TopBar({ isAuthenticated }) {
     <header className="topbar">
       <div className="brand">QuantVista</div>
       <nav>
-        <Link to="/">Login</Link>
-        <Link to="/dashboard">Dashboard</Link>
+        <Link to="/">Home</Link>
+        {!isAuthenticated ? <Link to="/login">Login</Link> : null}
+        <Link to="/dashboard">Ops</Link>
       </nav>
       {isAuthenticated ? (
         <button className="ghost" onClick={logout}>

@@ -2,10 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
-    GoogleLoginSerializer,
     MpinMixin,
     SetMpinSerializer,
     TelegramOtpRequestSerializer,
@@ -13,40 +11,9 @@ from .serializers import (
     UserProfileSerializer,
     VerifyMpinSerializer,
 )
-from .services import issue_otp, send_telegram_message, validate_otp, verify_google_id_token
+from .services import issue_otp, send_telegram_message, validate_otp
 
 User = get_user_model()
-
-
-class GoogleOAuthLoginView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        serializer = GoogleLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        token_payload = verify_google_id_token(serializer.validated_data["id_token"])
-        email = token_payload.get("email")
-        if not email:
-            return Response({"detail": "Google account email unavailable."}, status=status.HTTP_400_BAD_REQUEST)
-
-        user, _ = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "username": email,
-                "first_name": token_payload.get("given_name", ""),
-                "last_name": token_payload.get("family_name", ""),
-            },
-        )
-
-        refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": UserProfileSerializer(user).data,
-            }
-        )
 
 
 class ProfileView(APIView):

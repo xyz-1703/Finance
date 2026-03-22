@@ -3,11 +3,6 @@ from rest_framework import serializers
 
 from .models import User
 
-
-class GoogleLoginSerializer(serializers.Serializer):
-    id_token = serializers.CharField()
-
-
 class TelegramOtpRequestSerializer(serializers.Serializer):
     telegram_username = serializers.CharField(max_length=255)
 

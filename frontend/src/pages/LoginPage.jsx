@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 
 export default function LoginPage() {
-  const [idToken, setIdToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -14,12 +15,12 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const response = await api.post("/auth/google/", { id_token: idToken });
+      const response = await api.post("/auth/token/", { email, password });
       localStorage.setItem("access_token", response.data.access);
       localStorage.setItem("refresh_token", response.data.refresh);
-      navigate("/dashboard");
+      navigate("/market");
     } catch (err) {
-      setError(err.response?.data?.detail || "Google login failed.");
+      setError(err.response?.data?.detail || "JWT login failed.");
     } finally {
       setLoading(false);
     }
@@ -31,19 +32,28 @@ export default function LoginPage() {
         <p className="kicker">Institutional-grade stack</p>
         <h1>Trade, cluster, and forecast from one command center.</h1>
         <p>
-          Backend security uses JWT, Telegram OTP, and MPIN verification. Use a Google ID token to authenticate and access the portfolio console.
+          Backend security uses JWT, Telegram OTP, and MPIN verification. Sign in with your email and password to access the portfolio console.
         </p>
       </section>
       <section className="card form-card">
-        <h2>Google OAuth Login</h2>
+        <h2>JWT Login</h2>
         <form onSubmit={handleLogin}>
-          <label htmlFor="id-token">Google ID Token</label>
-          <textarea
-            id="id-token"
-            value={idToken}
-            onChange={(e) => setIdToken(e.target.value)}
-            rows={5}
-            placeholder="Paste Google id_token from your OAuth client flow"
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your account email"
+            required
+          />
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
             required
           />
           {error ? <p className="error">{error}</p> : null}
