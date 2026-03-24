@@ -29,8 +29,11 @@ INSTALLED_APPS = [
     "apps.mlops",
     "apps.admin_api",
     "apps.insights",
+<<<<<<< HEAD
     "apps.users",
     "apps.otp",
+=======
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 ]
 
 MIDDLEWARE = [
@@ -62,6 +65,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+<<<<<<< HEAD
 
 AUTHENTICATION_BACKENDS = [
     "apps.users.backends.EmailOrUsernameModelBackend",
@@ -89,6 +93,21 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+=======
+ASGI_APPLICATION = "config.asgi.application"
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "stockapp"),
+        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        "CONN_MAX_AGE": 120,
+    }
+}
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -110,6 +129,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 
+<<<<<<< HEAD
 # In DEBUG mode, allow all origins (safe for local development)
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
@@ -122,6 +142,14 @@ CORSS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://localhost:5174").split(",") if origin.strip()
+=======
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",") if origin.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",") if origin.strip()
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 ]
 
 REST_FRAMEWORK = {
@@ -147,14 +175,38 @@ SIMPLE_JWT = {
 }
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+<<<<<<< HEAD
 TELEGRAM_BOT_USERNAME = os.getenv("VITE_TELEGRAM_BOT_USERNAME", "")
 OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", "10"))
 OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
 OTP_REQUEST_LIMIT_PER_HOUR = int(os.getenv("OTP_REQUEST_LIMIT_PER_HOUR", "5"))
+=======
+OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", "10"))
+OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+OTP_REQUEST_LIMIT_PER_HOUR = int(os.getenv("OTP_REQUEST_LIMIT_PER_HOUR", "5"))
+TELEGRAM_LINK_CODE_EXPIRY_MINUTES = int(os.getenv("TELEGRAM_LINK_CODE_EXPIRY_MINUTES", "10"))
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 FINBERT_MODEL = os.getenv("FINBERT_MODEL", "ProsusAI/finbert")
 
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "./mlruns")
 
+<<<<<<< HEAD
+=======
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_INSIGHTS_REFRESH_SECONDS = int(os.getenv("CELERY_INSIGHTS_REFRESH_SECONDS", "3600"))
+CELERY_BEAT_SCHEDULE = {
+    "refresh-insights-watchlist-cache": {
+        "task": "apps.insights.tasks.refresh_market_watchlist_cache",
+        "schedule": CELERY_INSIGHTS_REFRESH_SECONDS,
+    }
+}
+
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
@@ -162,6 +214,7 @@ SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() == "true
 X_FRAME_OPTIONS = "DENY"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+<<<<<<< HEAD
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -183,3 +236,5 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 3600.0,
     },
 }
+=======
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba

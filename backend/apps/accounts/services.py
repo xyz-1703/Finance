@@ -1,5 +1,10 @@
 import random
+<<<<<<< HEAD
 import requests
+=======
+import re
+import string
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 from datetime import timedelta
 
 import requests
@@ -35,6 +40,110 @@ def issue_otp(user: User) -> str:
     return code
 
 
+<<<<<<< HEAD
+=======
+def issue_telegram_link_code(user: User) -> str:
+    code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    user.telegram_link_code = code
+    user.telegram_link_code_created_at = timezone.now()
+    user.save(update_fields=["telegram_link_code", "telegram_link_code_created_at"])
+    return code
+
+
+def get_telegram_bot_username() -> str | None:
+    if not settings.TELEGRAM_BOT_TOKEN:
+        return None
+
+    url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/getMe"
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+    except requests.RequestException:
+        return None
+
+    if payload.get("ok") is False:
+        return None
+
+    username = str(payload.get("result", {}).get("username", "")).strip()
+    return username or None
+
+
+def resolve_telegram_link_from_bot(link_code: str) -> tuple[str, str] | None:
+    if not settings.TELEGRAM_BOT_TOKEN:
+        raise ValueError("Telegram bot token is not configured")
+
+    normalized_code = link_code.strip().upper()
+    url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/getUpdates"
+    response = requests.get(url, params={"limit": 200, "timeout": 0}, timeout=10)
+    response.raise_for_status()
+    payload = response.json()
+    if payload.get("ok") is False:
+        description = str(payload.get("description", "Telegram API request failed")).strip()
+        raise ValueError(description or "Telegram API request failed")
+    updates = payload.get("result", [])
+
+    for update in reversed(updates):
+        message = (
+            update.get("message")
+            or update.get("edited_message")
+            or update.get("channel_post")
+            or update.get("edited_channel_post")
+            or {}
+        )
+        text = str(message.get("text", "")).strip()
+        normalized_text = text.upper().strip()
+        tokens = set(re.findall(r"[A-Z0-9]{6,16}", normalized_text))
+        if normalized_text != normalized_code and normalized_code not in tokens:
+            continue
+        chat = message.get("chat", {})
+        from_user = message.get("from", {})
+        chat_id = str(chat.get("id", "")).strip()
+        username = str(from_user.get("username", "")).strip()
+        if chat_id:
+            return username, chat_id
+
+    return None
+
+
+def verify_and_link_telegram(user: User, link_code: str) -> User:
+    if not user.telegram_link_code or not user.telegram_link_code_created_at:
+        raise ValueError("No active Telegram linking request found")
+    if link_code != user.telegram_link_code:
+        raise ValueError("Invalid verification code")
+    if timezone.now() - user.telegram_link_code_created_at > timedelta(minutes=getattr(settings, "TELEGRAM_LINK_CODE_EXPIRY_MINUTES", 10)):
+        raise ValueError("Telegram verification code has expired")
+
+    resolved = resolve_telegram_link_from_bot(link_code)
+    if resolved is None:
+        raise ValueError(
+            "Verification code not found in Telegram bot messages yet. Open a direct chat with your bot, press Start, send only the code, then retry."
+        )
+
+    username, chat_id = resolved
+    user.telegram_username = username
+    user.telegram_chat_id = chat_id
+    user.telegram_link_code = ""
+    user.telegram_link_code_created_at = None
+    user.save(
+        update_fields=[
+            "telegram_username",
+            "telegram_chat_id",
+            "telegram_link_code",
+            "telegram_link_code_created_at",
+        ]
+    )
+    return user
+
+
+def get_user_by_telegram_username(telegram_username: str) -> User | None:
+    normalized = telegram_username.lstrip("@").strip()
+    if not normalized:
+        return None
+    return User.objects.filter(telegram_username__iexact=normalized).first()
+
+
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 def send_telegram_message(chat_id: str, text: str) -> None:
     if not settings.TELEGRAM_BOT_TOKEN:
         raise ValueError("Telegram bot token is not configured")
@@ -64,6 +173,7 @@ def validate_otp(user: User, otp_code: str) -> bool:
     user.otp_attempts = 0
     user.save(update_fields=["otp_code", "otp_created_at", "otp_attempts"])
     return True
+<<<<<<< HEAD
 
 
 def resolve_telegram_chat_id(user, bot_token: str | None = None) -> str | None:
@@ -109,3 +219,5 @@ def resolve_telegram_chat_id(user, bot_token: str | None = None) -> str | None:
         print(f"Error resolving Telegram ID: {e}")
 
     return chat_id if str(chat_id).lstrip("-").isdigit() else None
+=======
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba

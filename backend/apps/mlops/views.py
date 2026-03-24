@@ -5,11 +5,19 @@ from rest_framework.views import APIView
 from .models import PredictionRun, StockCluster
 from .serializers import (
     ClusterRequestSerializer,
+<<<<<<< HEAD
+=======
+    PortfolioClusterRequestSerializer,
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     PredictionRequestSerializer,
     PredictionRunSerializer,
     StockClusterSerializer,
 )
+<<<<<<< HEAD
 from .services import run_portfolio_clustering, run_prediction
+=======
+from .services import run_portfolio_clustering, run_portfolio_clustering_for_portfolio, run_prediction
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 
 class ClusterRunView(APIView):
@@ -27,6 +35,28 @@ class ClusterRunView(APIView):
         return Response(StockClusterSerializer(clusters, many=True).data)
 
 
+<<<<<<< HEAD
+=======
+class PortfolioClusterRunView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PortfolioClusterRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            clusters = run_portfolio_clustering_for_portfolio(
+                created_by=request.user,
+                portfolio_id=serializer.validated_data["portfolio_id"],
+                n_clusters=serializer.validated_data["n_clusters"],
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(StockClusterSerializer(clusters, many=True).data)
+
+
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 class PredictionRunView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -46,7 +76,11 @@ class ClusterResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StockCluster.objects.select_related("stock").all()
     serializer_class = StockClusterSerializer
     permission_classes = [permissions.IsAuthenticated]
+<<<<<<< HEAD
     filterset_fields = ["stock", "cluster_label"]
+=======
+    filterset_fields = ["stock", "cluster_label", "portfolio"]
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 
 class PredictionRunViewSet(viewsets.ReadOnlyModelViewSet):

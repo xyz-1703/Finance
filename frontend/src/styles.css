@@ -43,11 +43,20 @@ body::before {
   align-items: center;
   color: #f8fbff;
   margin-bottom: 1.5rem;
+<<<<<<< HEAD
+=======
+  gap: 1rem;
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 }
 
 .topbar .brand {
   font-weight: 700;
   letter-spacing: 1px;
+<<<<<<< HEAD
+=======
+  color: #f8fbff;
+  text-decoration: none;
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 }
 
 .topbar nav a {
@@ -56,6 +65,33 @@ body::before {
   margin: 0 0.8rem;
 }
 
+<<<<<<< HEAD
+=======
+.topbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.profile-chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fbff;
+  color: #12314d;
+  font-weight: 700;
+}
+
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 .layout,
 .dashboard-grid {
   display: grid;
@@ -128,6 +164,71 @@ button.ghost {
   gap: 0.5rem;
 }
 
+<<<<<<< HEAD
+=======
+.forgot-wrap {
+  margin-top: 0.75rem;
+}
+
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #0d6eaa;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.oauth-area {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.quick-link {
+  display: inline-block;
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: #e9f0f8;
+  color: #193650;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.dashboard-main {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.portfolio-holdings {
+  grid-column: 1 / -1;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 13, 20, 0.6);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(480px, 100%);
+}
+
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 .error {
   color: var(--danger);
 }
@@ -162,6 +263,18 @@ button.ghost {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+<<<<<<< HEAD
+=======
+
+  .quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 }
 
 .market-shell,

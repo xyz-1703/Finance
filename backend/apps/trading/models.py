@@ -2,7 +2,11 @@ from django.conf import settings
 from django.db import models
 
 from apps.portfolio.models import Portfolio
+<<<<<<< HEAD
 from apps.stocks.models import StockMaster
+=======
+from apps.stocks.models import Stock
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 
 class Transaction(models.Model):
@@ -12,7 +16,11 @@ class Transaction(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions")
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="transactions")
+<<<<<<< HEAD
     stock = models.ForeignKey(StockMaster, on_delete=models.CASCADE, related_name="transactions")
+=======
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="transactions")
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     side = models.CharField(max_length=4, choices=SIDE_CHOICES)
     quantity = models.DecimalField(max_digits=14, decimal_places=4)
     price = models.DecimalField(max_digits=14, decimal_places=2)

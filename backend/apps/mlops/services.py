@@ -7,11 +7,17 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.arima.model import ARIMA
 
+<<<<<<< HEAD
 from apps.stocks.models import StockMaster
+=======
+from apps.portfolio.models import Portfolio, PortfolioStock
+from apps.stocks.models import Stock
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 from .models import PredictionRun, StockCluster
 
 
+<<<<<<< HEAD
 import yfinance as yf
 
 def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by):
@@ -63,15 +69,70 @@ def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by)
             stock=stock,
             cluster_label=int(label),
             defaults={"feature_vector": {"pe": vector[0], "roe": vector[1], "market_cap": vector[2]}, "created_by": created_by},
+=======
+def _cluster_symbols(*, symbols: list[str], n_clusters: int, created_by, portfolio: Portfolio | None = None):
+    stocks = list(Stock.objects.filter(symbol__in=symbols).select_related("fundamental"))
+    if len(stocks) < n_clusters:
+        raise ValueError("Number of stocks must be greater than or equal to n_clusters")
+
+    features = []
+    for stock in stocks:
+        fundamental = getattr(stock, "fundamental", None)
+        pe_ratio = float(fundamental.pe_ratio) if fundamental and fundamental.pe_ratio is not None else 0.0
+        roe = float(fundamental.roe) if fundamental and fundamental.roe is not None else 0.0
+        market_cap = float(fundamental.market_cap) if fundamental and fundamental.market_cap is not None else 0.0
+        features.append([pe_ratio, roe, market_cap])
+
+    matrix = np.array(features)
+    model = KMeans(n_clusters=n_clusters, random_state=42, n_init="auto")
+    labels = model.fit_predict(matrix)
+
+    results = []
+    for stock, label, vector in zip(stocks, labels, matrix, strict=True):
+        result, _ = StockCluster.objects.update_or_create(
+            portfolio=portfolio,
+            stock=stock,
+            defaults={
+                "cluster_label": int(label),
+                "feature_vector": {"pe": vector[0], "roe": vector[1], "market_cap": vector[2]},
+                "created_by": created_by,
+            },
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
         )
         results.append(result)
 
     return results
 
 
+<<<<<<< HEAD
 def run_prediction(*, symbol: str, model_type: str, created_by):
     stock = StockMaster.objects.get(symbol=symbol)
     price_data = list(stock.prices.order_by("updated_at").values_list("price", flat=True))
+=======
+def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by):
+    return _cluster_symbols(symbols=symbols, n_clusters=n_clusters, created_by=created_by)
+
+
+def run_portfolio_clustering_for_portfolio(*, portfolio_id: int, n_clusters: int, created_by):
+    portfolio = Portfolio.objects.filter(id=portfolio_id, user=created_by).first()
+    if portfolio is None:
+        raise ValueError("Portfolio not found")
+
+    symbols = list(
+        PortfolioStock.objects.filter(portfolio=portfolio)
+        .select_related("stock")
+        .values_list("stock__symbol", flat=True)
+    )
+    if not symbols:
+        raise ValueError("Portfolio has no stocks to cluster")
+
+    return _cluster_symbols(symbols=symbols, n_clusters=n_clusters, created_by=created_by, portfolio=portfolio)
+
+
+def run_prediction(*, symbol: str, model_type: str, created_by):
+    stock = Stock.objects.get(symbol=symbol)
+    price_data = list(stock.prices.order_by("timestamp").values_list("close", flat=True))
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     if len(price_data) < 5:
         raise ValueError("At least 5 price points required for prediction")
 

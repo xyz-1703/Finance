@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 alembic==1.18.4
 amqp==5.3.1
 annotated-doc==0.0.4
@@ -120,3 +121,25 @@ websockets==16.0
 Werkzeug==3.1.7
 yfinance==1.2.0
 zipp==3.23.0
+=======
+Django==5.1.6
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.4.0
+django-cors-headers==4.6.0
+django-filter==25.1
+psycopg[binary]==3.2.5
+python-dotenv==1.0.1
+requests==2.32.3
+celery==5.4.0
+redis==5.2.1
+scikit-learn==1.6.1
+statsmodels==0.14.4
+pandas==2.2.3
+numpy==2.2.2
+yfinance==0.2.54
+transformers==4.48.2
+mlflow==2.19.0
+gunicorn==23.0.0
+pytest==8.3.4
+pytest-django==4.10.0
+>>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
