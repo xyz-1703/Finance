@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn daemon for stock market Django app
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/opt/stock-market-app/backend
+Environment="PATH=/opt/stock-market-app/backend/venv/bin"
+ExecStart=/opt/stock-market-app/backend/venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
