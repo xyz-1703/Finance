@@ -7,6 +7,7 @@ from apps.stocks.models import StockMaster
 class Portfolio(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="portfolios")
     name = models.CharField(max_length=120)
+    sector = models.CharField(max_length=100, blank=True, null=True)
     is_automated = models.BooleanField(default=False)
     target_allocation = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
