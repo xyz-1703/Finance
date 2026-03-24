@@ -147,3 +147,85 @@
 .empty-state {
   @apply text-center py-20 text-gray-500 italic;
 }
+
+/* Clustering Results Styles */
+.clustering-results-section {
+  @apply mt-16 p-8 bg-finance-card/40 border border-finance-border rounded-3xl backdrop-blur-md;
+}
+
+.clustering-results-section h2 {
+  @apply text-2xl font-bold mb-4 text-white;
+}
+
+.insight-desc {
+  @apply text-gray-400 mb-8;
+}
+
+.clusters-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.cluster-group {
+  @apply bg-black/30 p-6 rounded-2xl border border-finance-border/50;
+}
+
+.cluster-group h3 {
+  @apply text-finance-primary font-bold mb-4 flex items-center gap-2;
+}
+
+.cluster-badges {
+  @apply flex flex-wrap gap-2;
+}
+
+.stock-badge {
+  @apply bg-finance-primary/20 text-finance-primary px-3 py-1 rounded-full text-sm font-semibold border border-finance-primary/30;
+}
+
+.btn-analyze {
+  @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-500/20 transition-all disabled:opacity-30;
+}
+
+.title-group {
+  @apply flex items-center gap-6;
+}
+
+/* Automated Portfolio Page Styles */
+.automated-portfolio-container {
+  @apply max-w-7xl mx-auto px-6 py-10;
+}
+
+.page-header {
+  @apply mb-12 text-center;
+}
+
+.page-header h1 {
+  @apply text-5xl font-black mb-4 bg-gradient-to-r from-finance-primary to-emerald-400 bg-clip-text text-transparent;
+}
+
+.subtitle {
+  @apply text-xl text-gray-400;
+}
+
+.suggestions-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8;
+}
+
+.suggestion-card {
+  @apply bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col items-center text-center transition-all hover:border-finance-primary;
+}
+
+.suggestion-card .symbol {
+  @apply text-2xl font-black text-finance-primary mb-1;
+}
+
+.suggestion-card .name {
+  @apply text-xs text-gray-500 mb-3;
+}
+
+.suggestion-card .badge {
+  @apply bg-finance-primary/20 text-finance-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase;
+}
+
+.how-it-works .card-panel {
+  @apply p-8 border-none bg-white/5;
+}

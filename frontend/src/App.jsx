@@ -12,6 +12,7 @@ import VerifyOtpPage from "./pages/VerifyOtpPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import PortfolioDetailsPage from "./pages/PortfolioDetailsPage";
+import AutomatedPortfolioPage from "./pages/AutomatedPortfolioPage";
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem("access_token");
@@ -58,6 +59,14 @@ export default function App() {
           element={
             <RequireAuth>
               <PortfolioDetailsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/automated"
+          element={
+            <RequireAuth>
+              <AutomatedPortfolioPage />
             </RequireAuth>
           }
         />

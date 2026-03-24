@@ -26,9 +26,9 @@ INSTALLED_APPS = [
     "apps.stocks",
     "apps.portfolio",
     "apps.trading",
-    # "apps.mlops",
+    "apps.mlops",
     "apps.admin_api",
-    # "apps.insights",
+    "apps.insights",
     "apps.users",
     "apps.otp",
 ]
@@ -177,5 +177,9 @@ CELERY_BEAT_SCHEDULE = {
     "update-stock-prices-every-30-seconds": {
         "task": "apps.stocks.tasks.update_stock_prices",
         "schedule": 30.0,
+    },
+    "auto-rebalance-every-hour": {
+        "task": "apps.portfolio.tasks.run_auto_rebalancing",
+        "schedule": 3600.0,
     },
 }

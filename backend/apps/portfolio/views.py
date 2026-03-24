@@ -1,4 +1,5 @@
 from rest_framework import permissions, viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction, models
 from .models import Portfolio, Holding, Transaction
@@ -14,6 +15,22 @@ class PortfolioViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def rebalance(self, request, pk=None):
+        from .automation import rebalance_portfolio
+        try:
+            trades = rebalance_portfolio(pk)
+            return Response({"status": "success", "trades": trades})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"])
+    def suggest_diversified(self, request):
+        from .automation import suggest_diversified_portfolio
+        from apps.stocks.serializers import StockMasterSerializer
+        stocks = suggest_diversified_portfolio(request.user)
+        return Response(StockMasterSerializer(stocks, many=True).data)
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer

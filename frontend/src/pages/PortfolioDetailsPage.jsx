@@ -11,6 +11,9 @@ export default function PortfolioDetailsPage() {
   const [addPayload, setAddPayload] = useState({ symbol: "", quantity: "" });
   const [submitting, setSubmitting] = useState(false);
 
+  const [clusters, setClusters] = useState([]);
+  const [isClustering, setIsClustering] = useState(false);
+
   useEffect(() => {
     fetchPortfolio();
   }, [id]);
@@ -23,6 +26,28 @@ export default function PortfolioDetailsPage() {
     } catch (err) {
       setError("Failed to load portfolio details.");
       setLoading(false);
+    }
+  };
+
+  const handleRunClustering = async () => {
+    if (!portfolio || portfolio.holdings.length < 2) {
+      setError("At least 2 unique stocks are required for clustering.");
+      return;
+    }
+    
+    setIsClustering(true);
+    setError("");
+    try {
+      const symbols = [...new Set(portfolio.holdings.map(h => h.symbol))];
+      const res = await api.post("/ml/cluster/run/", {
+        symbols,
+        n_clusters: Math.min(3, symbols.length)
+      });
+      setClusters(res.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Clustering analysis failed. Ensure dependencies are installed.");
+    } finally {
+      setIsClustering(false);
     }
   };
 
@@ -70,7 +95,16 @@ export default function PortfolioDetailsPage() {
 
       <section className="holdings-section">
         <div className="section-header">
-          <h2>Assets</h2>
+          <div className="title-group">
+            <h2>Assets</h2>
+            <button 
+              className="btn-analyze" 
+              onClick={handleRunClustering} 
+              disabled={isClustering || portfolio.holdings.length < 2}
+            >
+              {isClustering ? "Analyzing..." : "Analyze Portfolio Clustering"}
+            </button>
+          </div>
           <form className="add-stock-form" onSubmit={handleAddStock}>
             <input
               placeholder="Symbol (BTCUSDT, AAPL)"
@@ -127,6 +161,30 @@ export default function PortfolioDetailsPage() {
           </tbody>
         </table>
       </section>
+
+      {clusters.length > 0 && (
+        <section className="clustering-results-section">
+          <h2>Clustering Insights</h2>
+          <p className="insight-desc">Stocks grouped by similar fundamental profiles (PE, ROI, Market Cap):</p>
+          <div className="clusters-grid">
+            {[...new Set(clusters.map(c => c.cluster_label))].map(label => (
+              <div key={label} className="cluster-group">
+                <h3>Cluster {label}</h3>
+                <div className="cluster-badges">
+                  {clusters.filter(c => c.cluster_label === label).map(c => {
+                    const stockDetails = portfolio.holdings.find(h => h.symbol === c.stock_symbol) || { symbol: `ID: ${c.stock}` };
+                    return (
+                      <span key={c.id} className="stock-badge">
+                        {stockDetails.symbol}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -12,24 +12,53 @@ from apps.stocks.models import StockMaster
 from .models import PredictionRun, StockCluster
 
 
+import yfinance as yf
+
 def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by):
     stocks = list(StockMaster.objects.filter(symbol__in=symbols))
     if len(stocks) < n_clusters:
-        raise ValueError("Number of stocks must be greater than or equal to n_clusters")
+        # Fallback: adjust clusters if user has fewer stocks than requested
+        n_clusters = max(2, len(stocks))
+        if len(stocks) < 2:
+             raise ValueError("At least 2 stocks are required for clustering analysis.")
 
     features = []
+    valid_stocks = []
+    
     for stock in stocks:
-        pe_ratio = 0.0
-        roe = 0.0
-        market_cap = 0.0
-        features.append([pe_ratio, roe, market_cap])
+        try:
+            ticker = yf.Ticker(stock.symbol)
+            info = ticker.info
+            
+            pe_ratio = info.get('trailingPE') or info.get('forwardPE') or 0.0
+            roe = info.get('returnOnEquity') or 0.0
+            market_cap = info.get('marketCap') or 0.0
+            
+            # Simple normalization or handling zeros
+            features.append([float(pe_ratio), float(roe), float(market_cap)])
+            valid_stocks.append(stock)
+        except Exception:
+            continue
+
+    if len(valid_stocks) < n_clusters:
+        n_clusters = len(valid_stocks)
+        if n_clusters < 2:
+            raise ValueError("Insufficient data fetched for clustering. Try again later.")
 
     matrix = np.array(features)
+    # Basic normalization to improve KMeans performance
+    from sklearn.preprocessing import StandardScaler
+    try:
+        scaler = StandardScaler()
+        matrix_scaled = scaler.fit_transform(matrix)
+    except Exception:
+        matrix_scaled = matrix
+
     model = KMeans(n_clusters=n_clusters, random_state=42, n_init="auto")
-    labels = model.fit_predict(matrix)
+    labels = model.fit_predict(matrix_scaled)
 
     results = []
-    for stock, label, vector in zip(stocks, labels, matrix, strict=True):
+    for stock, label, vector in zip(valid_stocks, labels, features, strict=True):
         result, _ = StockCluster.objects.update_or_create(
             stock=stock,
             cluster_label=int(label),

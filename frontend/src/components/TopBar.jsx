@@ -15,7 +15,8 @@ export default function TopBar({ isAuthenticated }) {
       <nav>
         <Link to="/">Home</Link>
         {!isAuthenticated ? <Link to="/login">Login</Link> : null}
-        <Link to="/dashboard">Ops</Link>
+        <Link to="/dashboard">Dashboard</Link>
+        <Link to="/automated">Automated</Link>
       </nav>
       {isAuthenticated ? (
         <button className="ghost" onClick={logout}>
