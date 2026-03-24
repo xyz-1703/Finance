@@ -112,6 +112,32 @@ npm run dev
 
 Visit `http://localhost:5173` to access the app. Backend API is at `http://localhost:8000/api`.
 
+### Celery Timely Market Refresh (yfinance)
+
+Celery prefetches watchlist data on a schedule so market rows are ready without blocking page loads.
+
+1. Start Redis (default broker):
+   - Docker: `docker run -p 6379:6379 redis:7`
+
+2. Start Celery worker (new terminal):
+   ```bash
+   cd backend
+   venv\Scripts\activate
+   celery -A config worker -l info -P solo
+   ```
+
+3. Start Celery beat scheduler (new terminal):
+   ```bash
+   cd backend
+   venv\Scripts\activate
+   celery -A config beat -l info
+   ```
+
+4. Configure cadence and snapshot volume in `backend/.env`:
+   - `CELERY_INSIGHTS_REFRESH_SECONDS` (default `60`)
+   - `WATCHLIST_CELERY_SNAPSHOT_LIMIT` (default `120`)
+   - `WATCHLIST_PRICE_SNAPSHOT_LIMIT` (default `0` for fast API responses)
+
 ## API Highlights
 
 - Auth: `/api/auth/google/`, `/api/auth/token/refresh/`, `/api/auth/profile/`

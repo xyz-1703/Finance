@@ -1,4 +1,5 @@
 from rest_framework import permissions, viewsets
+from rest_framework.exceptions import PermissionDenied
 
 from .models import Portfolio, PortfolioStock
 from .serializers import PortfolioSerializer, PortfolioStockSerializer
@@ -21,3 +22,9 @@ class PortfolioStockViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return PortfolioStock.objects.filter(portfolio__user=self.request.user).select_related("portfolio", "stock")
+
+    def perform_create(self, serializer):
+        portfolio = serializer.validated_data.get("portfolio")
+        if portfolio.user_id != self.request.user.id:
+            raise PermissionDenied("Portfolio does not belong to user")
+        serializer.save()

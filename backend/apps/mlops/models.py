@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.db import models
 
+from apps.portfolio.models import Portfolio
 from apps.stocks.models import Stock
 
 
 class StockCluster(models.Model):
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="clusters", null=True, blank=True)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="cluster_results")
     cluster_label = models.IntegerField()
     feature_vector = models.JSONField(default=dict)
@@ -12,7 +14,7 @@ class StockCluster(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("stock", "cluster_label")
+        unique_together = ("portfolio", "stock")
 
 
 class PredictionRun(models.Model):

@@ -7,12 +7,13 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.arima.model import ARIMA
 
+from apps.portfolio.models import Portfolio, PortfolioStock
 from apps.stocks.models import Stock
 
 from .models import PredictionRun, StockCluster
 
 
-def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by):
+def _cluster_symbols(*, symbols: list[str], n_clusters: int, created_by, portfolio: Portfolio | None = None):
     stocks = list(Stock.objects.filter(symbol__in=symbols).select_related("fundamental"))
     if len(stocks) < n_clusters:
         raise ValueError("Number of stocks must be greater than or equal to n_clusters")
@@ -32,13 +33,37 @@ def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by)
     results = []
     for stock, label, vector in zip(stocks, labels, matrix, strict=True):
         result, _ = StockCluster.objects.update_or_create(
+            portfolio=portfolio,
             stock=stock,
-            cluster_label=int(label),
-            defaults={"feature_vector": {"pe": vector[0], "roe": vector[1], "market_cap": vector[2]}, "created_by": created_by},
+            defaults={
+                "cluster_label": int(label),
+                "feature_vector": {"pe": vector[0], "roe": vector[1], "market_cap": vector[2]},
+                "created_by": created_by,
+            },
         )
         results.append(result)
 
     return results
+
+
+def run_portfolio_clustering(*, symbols: list[str], n_clusters: int, created_by):
+    return _cluster_symbols(symbols=symbols, n_clusters=n_clusters, created_by=created_by)
+
+
+def run_portfolio_clustering_for_portfolio(*, portfolio_id: int, n_clusters: int, created_by):
+    portfolio = Portfolio.objects.filter(id=portfolio_id, user=created_by).first()
+    if portfolio is None:
+        raise ValueError("Portfolio not found")
+
+    symbols = list(
+        PortfolioStock.objects.filter(portfolio=portfolio)
+        .select_related("stock")
+        .values_list("stock__symbol", flat=True)
+    )
+    if not symbols:
+        raise ValueError("Portfolio has no stocks to cluster")
+
+    return _cluster_symbols(symbols=symbols, n_clusters=n_clusters, created_by=created_by, portfolio=portfolio)
 
 
 def run_prediction(*, symbol: str, model_type: str, created_by):

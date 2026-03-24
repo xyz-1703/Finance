@@ -30,6 +30,7 @@ venv/
 ENV/
 env/
 .venv
+.env.exapmle
 
 # Django
 *.log
