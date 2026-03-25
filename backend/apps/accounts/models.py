@@ -32,18 +32,12 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     username = models.CharField(max_length=150, unique=True)
     email = models.EmailField(unique=True)
-<<<<<<< HEAD
+    google_sub = models.CharField(max_length=255, unique=True, blank=True, null=True)
     mpin_hash = models.CharField(max_length=128, blank=True)
     telegram_username = models.CharField(max_length=255, blank=True, null=True, unique=True)
     telegram_chat_id = models.CharField(max_length=64, blank=True, null=True, unique=True)
-=======
-    google_sub = models.CharField(max_length=255, unique=True, blank=True, null=True)
-    mpin_hash = models.CharField(max_length=128, blank=True)
-    telegram_username = models.CharField(max_length=255, blank=True)
-    telegram_chat_id = models.CharField(max_length=64, blank=True)
     telegram_link_code = models.CharField(max_length=16, blank=True)
     telegram_link_code_created_at = models.DateTimeField(null=True, blank=True)
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     otp_code = models.CharField(max_length=10, blank=True)
     otp_created_at = models.DateTimeField(null=True, blank=True)
     otp_attempts = models.PositiveIntegerField(default=0)

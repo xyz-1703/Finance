@@ -1,10 +1,6 @@
 import random
-<<<<<<< HEAD
-import requests
-=======
 import re
 import string
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 from datetime import timedelta
 
 import requests
@@ -40,8 +36,6 @@ def issue_otp(user: User) -> str:
     return code
 
 
-<<<<<<< HEAD
-=======
 def issue_telegram_link_code(user: User) -> str:
     code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
     user.telegram_link_code = code
@@ -143,7 +137,6 @@ def get_user_by_telegram_username(telegram_username: str) -> User | None:
     return User.objects.filter(telegram_username__iexact=normalized).first()
 
 
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 def send_telegram_message(chat_id: str, text: str) -> None:
     if not settings.TELEGRAM_BOT_TOKEN:
         raise ValueError("Telegram bot token is not configured")
@@ -173,7 +166,6 @@ def validate_otp(user: User, otp_code: str) -> bool:
     user.otp_attempts = 0
     user.save(update_fields=["otp_code", "otp_created_at", "otp_attempts"])
     return True
-<<<<<<< HEAD
 
 
 def resolve_telegram_chat_id(user, bot_token: str | None = None) -> str | None:
@@ -219,5 +211,3 @@ def resolve_telegram_chat_id(user, bot_token: str | None = None) -> str | None:
         print(f"Error resolving Telegram ID: {e}")
 
     return chat_id if str(chat_id).lstrip("-").isdigit() else None
-=======
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba

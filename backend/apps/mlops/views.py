@@ -5,19 +5,12 @@ from rest_framework.views import APIView
 from .models import PredictionRun, StockCluster
 from .serializers import (
     ClusterRequestSerializer,
-<<<<<<< HEAD
-=======
     PortfolioClusterRequestSerializer,
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     PredictionRequestSerializer,
     PredictionRunSerializer,
     StockClusterSerializer,
 )
-<<<<<<< HEAD
-from .services import run_portfolio_clustering, run_prediction
-=======
 from .services import run_portfolio_clustering, run_portfolio_clustering_for_portfolio, run_prediction
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 
 class ClusterRunView(APIView):
@@ -35,8 +28,6 @@ class ClusterRunView(APIView):
         return Response(StockClusterSerializer(clusters, many=True).data)
 
 
-<<<<<<< HEAD
-=======
 class PortfolioClusterRunView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -56,7 +47,6 @@ class PortfolioClusterRunView(APIView):
         return Response(StockClusterSerializer(clusters, many=True).data)
 
 
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 class PredictionRunView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -76,11 +66,7 @@ class ClusterResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StockCluster.objects.select_related("stock").all()
     serializer_class = StockClusterSerializer
     permission_classes = [permissions.IsAuthenticated]
-<<<<<<< HEAD
-    filterset_fields = ["stock", "cluster_label"]
-=======
     filterset_fields = ["stock", "cluster_label", "portfolio"]
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 
 class PredictionRunViewSet(viewsets.ReadOnlyModelViewSet):

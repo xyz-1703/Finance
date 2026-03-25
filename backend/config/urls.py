@@ -13,9 +13,6 @@ urlpatterns = [
     path("api/ml/", include("apps.mlops.urls")),
     path("api/admin/", include("apps.admin_api.urls")),
     path("api/insights/", include("apps.insights.urls")),
-<<<<<<< HEAD
     path("api/", include("apps.users.urls")),
-=======
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     path("api/", include(router.urls)),
 ]

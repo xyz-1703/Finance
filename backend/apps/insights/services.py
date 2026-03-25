@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
-<<<<<<< HEAD
-=======
 import logging
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 import os
 import statistics
 import time
@@ -20,26 +17,7 @@ except Exception:  # pragma: no cover
     pipeline = None
 
 from apps.portfolio.models import Portfolio
-<<<<<<< HEAD
 from apps.stocks.models import StockMaster
-from apps.trading.models import Transaction
-from apps.trading.services import execute_trade
-
-INDIAN_SYMBOLS = [
-    "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS", "SBIN.NS", "LT.NS", "ITC.NS",
-    "HINDUNILVR.NS", "BHARTIARTL.NS", "AXISBANK.NS", "KOTAKBANK.NS", "BAJFINANCE.NS", "ASIANPAINT.NS",
-    "WIPRO.NS", "MARUTI.NS", "HCLTECH.NS", "TITAN.NS", "ULTRACEMCO.NS", "NESTLEIND.NS", "POWERGRID.NS",
-    "SUNPHARMA.NS", "TATAMOTORS.NS", "M&M.NS", "NTPC.NS", "ADANIENT.NS", "ADANIPORTS.NS", "ONGC.NS",
-    "COALINDIA.NS", "BAJAJFINSV.NS", "HDFCLIFE.NS", "JSWSTEEL.NS", "GRASIM.NS", "INDUSINDBK.NS",
-]
-
-LIST_CACHE_TTL_SECONDS = 300
-DETAIL_CACHE_TTL_SECONDS = 300
-_list_cache: dict = {"ts": 0.0, "data": []}
-_detail_cache: dict[str, dict] = {}
-BINANCE_BASE_URL = os.getenv("BINANCE_BASE_URL", "https://api.binance.com")
-=======
-from apps.stocks.models import Stock
 from apps.trading.models import Transaction
 from apps.trading.services import execute_trade
 from .models import MarketStockSnapshot
@@ -108,7 +86,6 @@ NSE_BASE_URL = os.getenv("NSE_BASE_URL", "https://www.nseindia.com")
 _nse_session: requests.Session | None = None
 _nse_session_warm_ts: float = 0.0
 
-# yfinance logs repeated failed-download lines aggressively during provider throttling.
 yf.utils.get_yf_logger().setLevel(logging.CRITICAL)
 
 
@@ -120,7 +97,6 @@ def _to_yf_symbol(symbol: str) -> str:
     if _is_indian_symbol(symbol):
         return symbol
     return symbol.replace(".", "-")
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 
 def _to_float(value, default=0.0):
@@ -132,8 +108,6 @@ def _to_float(value, default=0.0):
         return default
 
 
-<<<<<<< HEAD
-=======
 def _nse_series_symbol(symbol: str) -> str:
     return symbol.replace(".NS", "").strip().upper()
 
@@ -232,8 +206,6 @@ def _fetch_nse_historical_points(nse_symbol: str, limit: int = 120) -> list[dict
     except Exception:
         return []
 
-
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 def _is_fresh(timestamp: float, ttl_seconds: int) -> bool:
     return (time.time() - timestamp) < ttl_seconds
 
@@ -300,20 +272,15 @@ def _build_detail_payload_from_points(symbol: str, points: list[dict], source_la
     closes = [float(item["close"]) for item in points if _to_float(item["close"], 0.0) > 0]
     volumes = [float(item["volume"]) for item in points]
     if len(closes) < 2:
-<<<<<<< HEAD
-=======
         latest_price = round(closes[-1], 2) if closes else 0.0
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
         return {
             "symbol": symbol,
             "name": symbol.replace(".NS", ""),
             "sector": "Unknown",
             "currency": "INR",
-<<<<<<< HEAD
-            "market_price": 0.0,
-=======
             "market_price": latest_price,
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
             "fundamentals": {
                 "pe_ratio": 0.0,
                 "market_cap": 0.0,
@@ -408,29 +375,6 @@ def _sentiment_from_headlines(headlines: list[str]) -> dict:
     return {"label": label, "score": round(score, 4), "source_count": len(predictions)}
 
 
-<<<<<<< HEAD
-def get_indian_market_watchlist() -> list[dict]:
-    if _list_cache["data"] and _is_fresh(_list_cache["ts"], LIST_CACHE_TTL_SECONDS):
-        return _list_cache["data"]
-
-    stocks = []
-    prices = {}
-
-    try:
-        frame = yf.download(
-            tickers=" ".join(INDIAN_SYMBOLS),
-            period="5d",
-            interval="1d",
-            group_by="ticker",
-            auto_adjust=False,
-            progress=False,
-            threads=True,
-        )
-        if not frame.empty:
-            for symbol in INDIAN_SYMBOLS:
-                try:
-                    symbol_df = frame[symbol].dropna(how="all")
-=======
 def _download_snapshots(symbols: list[str]) -> dict:
     global _yf_rate_limited_until
     prices = {}
@@ -479,7 +423,6 @@ def _download_snapshots(symbols: list[str]) -> dict:
                         symbol_df = frame.dropna(how="all")
                     else:
                         symbol_df = frame[yf_symbol].dropna(how="all")
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
                     if symbol_df.empty:
                         continue
                     last_row = symbol_df.iloc[-1]
@@ -493,17 +436,6 @@ def _download_snapshots(symbols: list[str]) -> dict:
                     }
                 except Exception:
                     continue
-<<<<<<< HEAD
-    except Exception:
-        prices = {}
-
-    for symbol in INDIAN_SYMBOLS:
-        snapshot = prices.get(symbol, {})
-        if not snapshot or _to_float(snapshot.get("market_price"), 0.0) <= 0:
-            binance_snapshot = _fetch_binance_ticker_snapshot(symbol)
-            if binance_snapshot:
-                snapshot = binance_snapshot
-=======
 
     # Yahoo quote endpoint fallback (may be blocked in some environments).
     if not prices:
@@ -822,7 +754,6 @@ def _build_watchlist_data(
             seeded = True
         else:
             seeded = False
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
         regular_price = _to_float(snapshot.get("market_price"), 0.0)
         previous_close = _to_float(snapshot.get("previous_close"), regular_price)
@@ -834,29 +765,13 @@ def _build_watchlist_data(
                 "symbol": symbol,
                 "name": symbol.replace(".NS", ""),
                 "sector": "Unknown",
-<<<<<<< HEAD
-=======
                 "market": "IN" if _is_indian_symbol(symbol) else "US",
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
                 "market_price": round(regular_price, 2),
                 "day_change": round(day_change, 2),
                 "day_change_pct": round(pct_change, 2),
                 "volume": int(snapshot.get("volume", 0)),
                 "market_cap": 0.0,
-<<<<<<< HEAD
-                "data_source": "binance" if "symbol" in snapshot else "yahoo",
-            }
-        )
-
-    _list_cache["ts"] = time.time()
-    _list_cache["data"] = stocks
-    return stocks
-
-
-def get_stock_detail_analysis(symbol: str) -> dict:
-    if not symbol.endswith(".NS"):
-        raise ValueError("Only Indian stocks with .NS symbols are supported")
-=======
                 "data_source": (
                     "cached"
                     if seeded
@@ -952,18 +867,12 @@ def get_stock_detail_analysis(symbol: str) -> dict:
 
     if symbol not in ALLOWED_STOCK_SYMBOLS:
         raise ValueError("Symbol is outside configured stock universe")
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 
     cached = _detail_cache.get(symbol)
     if cached and _is_fresh(cached.get("ts", 0.0), DETAIL_CACHE_TTL_SECONDS):
         return cached["data"]
 
-<<<<<<< HEAD
-    ticker = yf.Ticker(symbol)
-    try:
-        history = ticker.history(period="6mo", interval="1d")
-    except YFRateLimitError:
-=======
     yf_symbol = _to_yf_symbol(symbol)
     ticker = yf.Ticker(yf_symbol)
     try:
@@ -995,30 +904,24 @@ def get_stock_detail_analysis(symbol: str) -> dict:
             payload = _build_detail_payload_from_points(symbol, chart_points, "yahoo_chart")
             _detail_cache[symbol] = {"ts": time.time(), "data": payload}
             return payload
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
         binance_points = _fetch_binance_klines(symbol)
         if binance_points:
             payload = _build_detail_payload_from_points(symbol, binance_points, "binance_fallback")
             _detail_cache[symbol] = {"ts": time.time(), "data": payload}
             return payload
-<<<<<<< HEAD
-=======
         snapshot_payload = _build_detail_payload_from_db_snapshot(symbol)
         if snapshot_payload:
             _detail_cache[symbol] = {"ts": time.time(), "data": snapshot_payload}
             return snapshot_payload
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
         if cached:
             return cached["data"]
         return {
             "symbol": symbol,
             "name": symbol.replace(".NS", ""),
             "sector": "Unknown",
-<<<<<<< HEAD
-            "currency": "INR",
-=======
             "currency": "INR" if _is_indian_symbol(symbol) else "USD",
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
             "market_price": 0.0,
             "fundamentals": {
                 "pe_ratio": 0.0,
@@ -1040,8 +943,6 @@ def get_stock_detail_analysis(symbol: str) -> dict:
         }
 
     if history.empty:
-<<<<<<< HEAD
-=======
         if _is_indian_symbol(symbol):
             nse_points = _fetch_nse_historical_points(symbol, limit=120)
             if nse_points:
@@ -1068,19 +969,16 @@ def get_stock_detail_analysis(symbol: str) -> dict:
             payload = _build_detail_payload_from_points(symbol, chart_points, "yahoo_chart")
             _detail_cache[symbol] = {"ts": time.time(), "data": payload}
             return payload
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
         binance_points = _fetch_binance_klines(symbol)
         if binance_points:
             payload = _build_detail_payload_from_points(symbol, binance_points, "binance_fallback")
             _detail_cache[symbol] = {"ts": time.time(), "data": payload}
             return payload
-<<<<<<< HEAD
-=======
         snapshot_payload = _build_detail_payload_from_db_snapshot(symbol)
         if snapshot_payload:
             _detail_cache[symbol] = {"ts": time.time(), "data": snapshot_payload}
             return snapshot_payload
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
         if cached:
             return cached["data"]
         raise ValueError("No market data found for symbol")
@@ -1140,11 +1038,8 @@ def get_stock_detail_analysis(symbol: str) -> dict:
         "symbol": symbol,
         "name": info.get("longName", symbol.replace(".NS", "")),
         "sector": info.get("sector", "Unknown"),
-<<<<<<< HEAD
-        "currency": info.get("currency", "INR"),
-=======
         "currency": info.get("currency", "INR" if _is_indian_symbol(symbol) else "USD"),
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
         "market_price": round(closes[-1], 2),
         "fundamentals": {
             "pe_ratio": _to_float(info.get("trailingPE"), 0.0),
@@ -1177,12 +1072,6 @@ def get_stock_sentiment(symbol: str) -> dict:
 
 
 def execute_market_trade(*, user, symbol: str, side: str, quantity, price=None, mpin: str = "", portfolio_name: str = "Primary"):
-<<<<<<< HEAD
-    if not symbol.endswith(".NS"):
-        raise ValueError("Only Indian stocks with .NS symbols are supported")
-
-    ticker = yf.Ticker(symbol)
-=======
     symbol = symbol.upper()
     if symbol in ALLOWED_US_SYMBOLS:
         resolved_symbol = symbol
@@ -1195,22 +1084,15 @@ def execute_market_trade(*, user, symbol: str, side: str, quantity, price=None, 
 
     yf_symbol = _to_yf_symbol(resolved_symbol)
     ticker = yf.Ticker(yf_symbol)
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
     last_close = _to_float(getattr(ticker.fast_info, "last_price", 0), 0)
     execution_price = price or last_close
     if execution_price <= 0:
         raise ValueError("Unable to resolve valid market price")
 
-    stock, _ = Stock.objects.get_or_create(
-<<<<<<< HEAD
-        symbol=symbol,
-        defaults={
-            "name": ticker.info.get("longName", symbol),
-=======
+    stock, _ = StockMaster.objects.get_or_create(
         symbol=resolved_symbol,
         defaults={
             "name": ticker.info.get("longName", resolved_symbol),
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
             "sector": ticker.info.get("sector", "Unknown"),
         },
     )
@@ -1228,11 +1110,8 @@ def execute_market_trade(*, user, symbol: str, side: str, quantity, price=None, 
 
     return {
         "transaction_id": trade.id,
-<<<<<<< HEAD
-        "symbol": symbol,
-=======
         "symbol": resolved_symbol,
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
         "side": trade.side,
         "quantity": float(trade.quantity),
         "price": float(trade.price),

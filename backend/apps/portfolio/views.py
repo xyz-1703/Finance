@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,14 +5,7 @@ from django.db import transaction, models
 from .models import Portfolio, Holding, Transaction
 from .serializers import PortfolioSerializer, HoldingSerializer, TransactionSerializer
 from apps.stocks.models import StockMaster, StockPrice
-=======
-from rest_framework import permissions, viewsets
-from rest_framework.exceptions import PermissionDenied
 
-from .models import Portfolio, PortfolioStock
-from .serializers import PortfolioSerializer, PortfolioStockSerializer
-
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 
 class PortfolioViewSet(viewsets.ModelViewSet):
     serializer_class = PortfolioSerializer
@@ -25,7 +17,6 @@ class PortfolioViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-<<<<<<< HEAD
     @action(detail=True, methods=["post"])
     def rebalance(self, request, pk=None):
         from .automation import rebalance_portfolio
@@ -76,7 +67,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         price = price_obj.price
 
         # Check for SELL validity
-        holding, created = Holding.objects.get_or_create(portfolio=portfolio, stock=stock, defaults={'quantity': 0})
+        holding, created = Holding.objects.get_or_create(portfolio=portfolio, stock=stock, defaults={'quantity': 0, 'average_buy_price': 0})
         
         if action == 'SELL' and holding.quantity < quantity:
             return Response({"error": "Insufficient quantity to sell"}, status=status.HTTP_400_BAD_REQUEST)
@@ -92,7 +83,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         # Update holding
         if action == 'BUY':
+            # Update average buy price
+            total_cost = (holding.quantity * holding.average_buy_price) + (tx.quantity * tx.price)
             holding.quantity += tx.quantity
+            if holding.quantity > 0:
+                holding.average_buy_price = total_cost / holding.quantity
         else:
             holding.quantity -= tx.quantity
         holding.save()
@@ -106,18 +101,4 @@ class HoldingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Holding.objects.filter(portfolio__user=self.request.user).select_related("portfolio", "stock")
-=======
 
-class PortfolioStockViewSet(viewsets.ModelViewSet):
-    serializer_class = PortfolioStockSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return PortfolioStock.objects.filter(portfolio__user=self.request.user).select_related("portfolio", "stock")
-
-    def perform_create(self, serializer):
-        portfolio = serializer.validated_data.get("portfolio")
-        if portfolio.user_id != self.request.user.id:
-            raise PermissionDenied("Portfolio does not belong to user")
-        serializer.save()
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba

@@ -10,14 +10,11 @@ class IndianStocksView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-<<<<<<< HEAD
-        return Response(get_indian_market_watchlist())
-=======
         market = str(request.query_params.get("market", "ALL")).upper()
         per_market = int(request.query_params.get("per_market", "400"))
         per_market = max(1, min(per_market, 500))
         return Response(get_indian_market_watchlist(market=market, per_market=per_market))
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 
 
 class IndianStockDetailView(APIView):
