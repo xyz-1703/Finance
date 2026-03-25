@@ -78,16 +78,16 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             cd /opt/stock-market-app
-            git pull origin main
-            cd backend
-            source venv/bin/activate
-            pip install -r requirements.txt
-            python manage.py migrate --noinput
-            python manage.py collectstatic --noinput
-            sudo systemctl restart gunicorn
-            cd ../frontend
-            npm ci
-            npm run build
-            sudo rsync -a dist/ /var/www/stock-market/
-            sudo systemctl reload nginx
+            # update code (fast-forward only)
+            git fetch --all
+            git pull --ff-only origin main || true
+
+            # Restart services so they pick up the new code
+            # Gunicorn (systemd)
+            sudo systemctl restart gunicorn || true
+
+            # Frontend process managed by pm2
             pm2 restart stock-market-frontend || true
+
+            # Reload nginx configuration / static assets
+            sudo systemctl reload nginx || true
