@@ -1,231 +1,177 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300..700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-deep: #05070A;
+  --bg-main: #0B0E14;
+  --card-bg: rgba(21, 26, 34, 0.7);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --primary: #2962FF;
+  --primary-glow: rgba(41, 98, 255, 0.4);
+  --success: #00E676;
+  --danger: #FF1744;
+  --text-primary: #FFFFFF;
+  --text-secondary: #8B94A5;
+  --text-muted: #59657D;
+  --glass-effect: blur(12px) saturate(180%);
+}
+
 @layer base {
   body {
-    @apply bg-finance-bg text-finance-text font-sans antialiased;
+    @apply bg-finance-bg text-finance-text font-sans antialiased selection:bg-finance-primary/30 selection:text-white;
+    background-color: var(--bg-main);
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(41, 98, 255, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(0, 230, 118, 0.05) 0%, transparent 40%);
+    min-height: 100vh;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
   }
 }
 
 @layer components {
+  .glass-card {
+    background-color: var(--card-bg);
+    backdrop-filter: var(--glass-effect);
+    -webkit-backdrop-filter: var(--glass-effect);
+    border: 1px solid var(--card-border);
+    @apply rounded-2xl shadow-xl transition-all duration-300;
+  }
+
+  .premium-btn {
+    @apply px-6 py-2.5 rounded-xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2;
+  }
+
   .btn-primary {
-    @apply bg-finance-primary hover:bg-finance-primaryHover text-white px-4 py-2 rounded-md font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98];
+    @apply premium-btn bg-finance-primary text-white hover:shadow-lg hover:shadow-finance-primary/30 hover:-translate-y-0.5;
   }
+
+  .btn-secondary {
+    @apply premium-btn bg-white/5 border border-white/10 text-white hover:bg-white/10;
+  }
+
   .input-field {
-    @apply w-full bg-finance-card/50 border border-finance-border rounded-md px-4 py-3 text-finance-text focus:outline-none focus:border-finance-primary focus:ring-1 focus:ring-finance-primary transition-all backdrop-blur-sm;
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-finance-muted focus:outline-none focus:border-finance-primary focus:ring-4 focus:ring-finance-primary/10 transition-all backdrop-blur-sm;
   }
-  .card-panel {
-    @apply bg-finance-card border border-finance-border rounded-xl shadow-lg shadow-black/20 backdrop-blur-md;
+  
+  select.input-field option {
+    @apply bg-[#0B0E14] text-white;
+  }
+
+  .nav-link {
+    @apply text-finance-muted hover:text-white transition-colors duration-200 font-medium px-4 py-2 rounded-lg hover:bg-white/5;
+  }
+
+  .nav-link.active {
+    @apply text-finance-primary bg-finance-primary/10;
+  }
+
+  /* Table Customization */
+  .modern-table {
+    @apply w-full border-separate border-spacing-0;
+  }
+
+  .modern-table th {
+    @apply text-left py-4 px-6 text-[10px] uppercase tracking-[0.2em] text-finance-muted font-bold border-b border-white/5;
+  }
+
+  .modern-table td {
+    @apply py-5 px-6 border-b border-white/5 text-sm align-middle transition-all duration-200;
+  }
+
+  .modern-table tr:hover td {
+    @apply bg-white/[0.02];
+  }
+
+  .modern-table tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* Layout & Grid Migrations */
+  .app-shell {
+    @apply max-w-[1400px] mx-auto px-6 py-4;
+  }
+
+  .layout-grid {
+    @apply grid gap-6;
+  }
+
+  .grid-cols-stats {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  }
+
+  .dashboard-main-grid {
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-8;
+  }
+
+  /* Chart & Visualization */
+  .chart-container {
+    @apply w-full h-[400px] bg-white/[0.02] rounded-3xl border border-white/5 p-6 backdrop-blur-sm;
+  }
+
+  /* Components */
+  .topbar {
+    @apply flex items-center justify-between py-6 mb-10 border-b border-white/5;
+  }
+
+  .brand-logo {
+    @apply text-2xl font-black tracking-tighter text-white hover:text-finance-primary transition-colors;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply glass-card w-full max-w-lg p-8 animate-fade-in;
+  }
+
+  /* Text Variants */
+  .text-gradient {
+    @apply bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent;
+  }
+
+  .badge {
+    @apply px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border;
+  }
+
+  .badge-primary {
+    @apply bg-finance-primary/10 text-finance-primary border-finance-primary/20;
+  }
+
+  .badge-success {
+    @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
+  }
+
+  .badge-danger {
+    @apply bg-rose-500/10 text-rose-400 border-rose-500/20;
   }
 }
 
-/* Dashboard & Portfolio Styles */
-.dashboard-container, .portfolio-details-container {
-  @apply max-w-7xl mx-auto px-6 py-10;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.dashboard-header, .details-header {
-  @apply mb-12;
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
-.dashboard-header h1, .details-header h1 {
-  @apply text-4xl font-bold mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.portfolio-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8;
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
 }
 
-.portfolio-card {
-  @apply bg-finance-card border border-finance-border p-8 rounded-2xl transition-all duration-300 hover:border-finance-primary hover:shadow-2xl hover:shadow-finance-primary/10 flex flex-col;
-}
-
-.portfolio-card h3 {
-  @apply text-xl font-semibold mb-6 text-gray-200;
-}
-
-.portfolio-stats {
-  @apply flex justify-between items-center mb-8;
-}
-
-.stat {
-  @apply flex flex-col gap-1;
-}
-
-.stat .label {
-  @apply text-xs uppercase tracking-wider text-gray-500 font-medium;
-}
-
-.stat .value {
-  @apply text-2xl font-bold;
-}
-
-.stat .value.success {
-  @apply text-emerald-400;
-}
-
-.stat .value.highlight {
-  @apply text-finance-primary;
-}
-
-.card-footer {
-  @apply mt-auto pt-6 border-t border-finance-border text-sm text-gray-400 font-medium flex justify-between items-center;
-}
-
-.create-card {
-  @apply border-dashed border-2 hover:border-solid bg-transparent;
-}
-
-.create-card form {
-  @apply flex flex-col gap-4 mt-4;
-}
-
-.create-card input {
-  @apply bg-black/20 border-finance-border rounded-lg px-4 py-3 focus:outline-none focus:border-finance-primary transition-all;
-}
-
-/* Details Page specific */
-.details-header {
-  @apply flex flex-col md:flex-row md:items-end justify-between gap-6;
-}
-
-.header-stats {
-  @apply flex gap-12 bg-finance-card/30 p-6 rounded-2xl border border-finance-border backdrop-blur-sm;
-}
-
-.btn-back {
-  @apply text-gray-400 hover:text-white mb-6 flex items-center gap-2 transition-colors;
-}
-
-.holdings-table {
-  @apply w-full border-collapse mt-8;
-}
-
-.holdings-table th {
-  @apply text-left py-4 px-6 text-xs uppercase tracking-widest text-gray-500 font-semibold border-b border-finance-border;
-}
-
-.holdings-table td {
-  @apply py-6 px-6 border-b border-finance-border align-middle;
-}
-
-.holdings-table tr:hover {
-  @apply bg-white/5;
-}
-
-.symbol {
-  @apply font-mono font-bold text-finance-primary text-lg;
-}
-
-.add-stock-form {
-  @apply flex gap-4 bg-finance-card/50 p-6 rounded-xl border border-finance-border mb-8;
-}
-
-.add-stock-form input {
-  @apply bg-black/40 border-finance-border rounded-lg px-4 py-2 focus:outline-none focus:border-finance-primary flex-1;
-}
-
-.add-stock-form button {
-  @apply bg-finance-primary hover:bg-finance-primaryHover px-8 py-2 rounded-lg font-bold transition-all disabled:opacity-50;
-}
-
-.btn-delete {
-  @apply text-rose-500 hover:text-rose-400 bg-rose-500/10 px-3 py-1 rounded text-sm transition-colors;
-}
-
-.error-alert {
-  @apply bg-rose-500/10 border border-rose-500/50 text-rose-500 p-4 rounded-xl mb-8 flex items-center gap-3;
-}
-
-.loading {
-  @apply flex items-center justify-center min-h-[400px] text-gray-400 text-xl font-medium;
-}
-
-.empty-state {
-  @apply text-center py-20 text-gray-500 italic;
-}
-
-/* Clustering Results Styles */
-.clustering-results-section {
-  @apply mt-16 p-8 bg-finance-card/40 border border-finance-border rounded-3xl backdrop-blur-md;
-}
-
-.clustering-results-section h2 {
-  @apply text-2xl font-bold mb-4 text-white;
-}
-
-.insight-desc {
-  @apply text-gray-400 mb-8;
-}
-
-.clusters-grid {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
-}
-
-.cluster-group {
-  @apply bg-black/30 p-6 rounded-2xl border border-finance-border/50;
-}
-
-.cluster-group h3 {
-  @apply text-finance-primary font-bold mb-4 flex items-center gap-2;
-}
-
-.cluster-badges {
-  @apply flex flex-wrap gap-2;
-}
-
-.stock-badge {
-  @apply bg-finance-primary/20 text-finance-primary px-3 py-1 rounded-full text-sm font-semibold border border-finance-primary/30;
-}
-
-.btn-analyze {
-  @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-500/20 transition-all disabled:opacity-30;
-}
-
-.title-group {
-  @apply flex items-center gap-6;
-}
-
-/* Automated Portfolio Page Styles */
-.automated-portfolio-container {
-  @apply max-w-7xl mx-auto px-6 py-10;
-}
-
-.page-header {
-  @apply mb-12 text-center;
-}
-
-.page-header h1 {
-  @apply text-5xl font-black mb-4 bg-gradient-to-r from-finance-primary to-emerald-400 bg-clip-text text-transparent;
-}
-
-.subtitle {
-  @apply text-xl text-gray-400;
-}
-
-.suggestions-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8;
-}
-
-.suggestion-card {
-  @apply bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col items-center text-center transition-all hover:border-finance-primary;
-}
-
-.suggestion-card .symbol {
-  @apply text-2xl font-black text-finance-primary mb-1;
-}
-
-.suggestion-card .name {
-  @apply text-xs text-gray-500 mb-3;
-}
-
-.suggestion-card .badge {
-  @apply bg-finance-primary/20 text-finance-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase;
-}
-
-.how-it-works .card-panel {
-  @apply p-8 border-none bg-white/5;
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
 }

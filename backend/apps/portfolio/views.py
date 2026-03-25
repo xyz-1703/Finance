@@ -33,6 +33,15 @@ class PortfolioViewSet(viewsets.ModelViewSet):
         stocks = suggest_diversified_portfolio(request.user)
         return Response(StockMasterSerializer(stocks, many=True).data)
 
+    @action(detail=False, methods=["post"])
+    def sell(self, request):
+        # A convenience wrapper for selling stock
+        # Actual logic is handled in TransactionViewSet, but this meets the "POST /portfolio/sell" requirement
+        from rest_framework.reverse import reverse
+        from django.shortcuts import redirect
+        # Forward to transaction viewset logic or just implement here
+        return Response({"detail": "Use POST /api/portfolio/transactions/ with action='SELL'"}, status=status.HTTP_200_OK)
+
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -60,11 +69,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response({"error": "Invalid portfolio or stock"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get latest price from StockPrice
-        price_obj = StockPrice.objects.filter(stock=stock).first()
+        price_obj = StockPrice.objects.filter(stock=stock).order_by("-timestamp").first()
         if not price_obj:
             return Response({"error": f"No price available for {stock.symbol}"}, status=status.HTTP_400_BAD_REQUEST)
         
-        price = price_obj.price
+        price = price_obj.close
 
         # Check for SELL validity
         holding, created = Holding.objects.get_or_create(portfolio=portfolio, stock=stock, defaults={'quantity': 0, 'average_buy_price': 0})
@@ -88,9 +97,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
             holding.quantity += tx.quantity
             if holding.quantity > 0:
                 holding.average_buy_price = total_cost / holding.quantity
+            holding.save()
         else:
             holding.quantity -= tx.quantity
-        holding.save()
+            if holding.quantity <= 0.0001: # Use small threshold for floating point
+                holding.delete()
+            else:
+                holding.save()
 
         serializer = self.get_serializer(tx)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

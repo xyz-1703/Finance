@@ -22,15 +22,14 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
-    "apps.accounts",
-    "apps.stocks",
-    "apps.portfolio",
-    "apps.trading",
-    "apps.mlops",
-    "apps.admin_api",
-    "apps.insights",
-    "apps.users",
-    "apps.otp",
+    'apps.accounts',
+    'apps.stocks',
+    'apps.portfolio',
+    'apps.trading',
+    'apps.mlops',
+    'apps.admin_api',
+    'apps.insights',
+    'apps.otp',
 ]
 
 MIDDLEWARE = [
@@ -63,15 +62,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 AUTHENTICATION_BACKENDS = [
-    "apps.users.backends.EmailOrUsernameModelBackend",
+    "apps.accounts.backends.EmailOrUsernameModelBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 ASGI_APPLICATION = "config.asgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "stock_portfolio"),
+        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
 

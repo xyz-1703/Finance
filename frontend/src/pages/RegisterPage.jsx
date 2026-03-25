@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/axios';
+import api from '../api/client';
 
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'Quantstockportfoli_bot';
 const TELEGRAM_BOT_URL = `https://t.me/${BOT_USERNAME}?start=register`;
@@ -29,7 +29,18 @@ const RegisterPage = () => {
     setError('');
     setLoading(true);
     try {
-      await api.post('register', formData);
+      const response = await api.post('/auth/register/', formData);
+      
+      // Auto-login on register
+      localStorage.setItem('access_token', response.data.access);
+      if (response.data.refresh) {
+          localStorage.setItem('refresh_token', response.data.refresh);
+      }
+      if (response.data.user) {
+          localStorage.setItem('current_user', JSON.stringify(response.data.user));
+      }
+      window.dispatchEvent(new Event("auth-changed"));
+
       setHasTelegram(!!formData.telegram_id);
       setRegistered(true);
     } catch (err) {

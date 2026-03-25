@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import api from '../api/axios';
+import api from '../api/client';
 
 const VerifyOtpPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || '';
-  const telegramId = location.state?.telegram_id || '';
+  const telegramUsername = location.state?.telegram_username || '';
   
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -14,17 +14,21 @@ const VerifyOtpPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email && !telegramId) {
+    if (!email && !telegramUsername) {
       setError("No identifier found. Please restart the forgot password process.");
       return;
     }
     setError('');
     setLoading(true);
     try {
-      await api.post('verify-otp', { email, telegram_id: telegramId, code });
-      navigate('/reset-password', { state: { email, telegram_id: telegramId, code } });
+      await api.post('/auth/otp/verify/', { 
+        email, 
+        telegram_username: telegramUsername, 
+        otp_code: code 
+      });
+      navigate('/reset-password', { state: { email, telegram_username: telegramUsername, code } });
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid or expired OTP');
+      setError(err.response?.data?.detail || 'Invalid or expired OTP');
     } finally {
       setLoading(false);
     }

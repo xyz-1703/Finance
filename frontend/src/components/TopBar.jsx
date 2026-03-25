@@ -1,13 +1,5 @@
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-
-
-export default function TopBar({ isAuthenticated }) {
-  const navigate = useNavigate();
-
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-
 import api from "../api/client";
 
 export default function TopBar({ isAuthenticated }) {
@@ -33,40 +25,31 @@ export default function TopBar({ isAuthenticated }) {
   };
 
   return (
-    <header className="topbar">
-
-      <div className="brand">QuantVista</div>
-      <nav>
-        <Link to="/">Home</Link>
-        {!isAuthenticated ? <Link to="/login">Login</Link> : null}
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/automated">Automated</Link>
+    <header className="topbar px-6">
+      <Link to="/" className="brand-logo">QuantVista</Link>
+      <nav className="flex items-center gap-2">
+        <Link to="/" className="nav-link">Home</Link>
+        {isAuthenticated ? <Link to="/dashboard" className="nav-link">Dashboard</Link> : null}
+        {isAuthenticated ? <Link to="/portfolio" className="nav-link">Portfolio</Link> : null}
+        {isAuthenticated ? <Link to="/trade" className="nav-link">Trade</Link> : null}
+        {isAuthenticated ? <Link to="/prediction" className="nav-link text-finance-primary/80">Prediction</Link> : null}
+        {isAuthenticated ? <Link to="/forecasting" className="nav-link text-finance-primary/80">Forecasting</Link> : null}
+        {isAuthenticated ? <Link to="/settings" className="nav-link">Settings</Link> : null}
+        {!isAuthenticated ? <Link to="/login" className="nav-link">Login</Link> : null}
+        {!isAuthenticated ? <Link to="/register" className="nav-link">Register</Link> : null}
       </nav>
       {isAuthenticated ? (
-        <button className="ghost" onClick={logout}>
-          Logout
-        </button>
-
-      <Link to="/" className="brand">QuantVista</Link>
-      <nav>
-        <Link to="/">Home</Link>
-        {isAuthenticated ? <Link to="/dashboard">Dashboard</Link> : null}
-        {isAuthenticated ? <Link to="/portfolio">Portfolio</Link> : null}
-        {isAuthenticated ? <Link to="/trade">Trade</Link> : null}
-        {isAuthenticated ? <Link to="/settings">Settings</Link> : null}
-        {!isAuthenticated ? <Link to="/login">Login</Link> : null}
-        {!isAuthenticated ? <Link to="/register">Register</Link> : null}
-      </nav>
-      {isAuthenticated ? (
-        <div className="profile-actions">
-          <button className="profile-chip" onClick={() => navigate("/settings")} aria-label="Profile settings">
+        <div className="flex items-center gap-4">
+          <button 
+            className="w-10 h-10 rounded-full bg-finance-primary/20 text-finance-primary font-bold flex items-center justify-center border border-finance-primary/30 hover:bg-finance-primary hover:text-white transition-all shadow-lg shadow-finance-primary/10" 
+            onClick={() => navigate("/settings")}
+          >
             {userInitial}
           </button>
-          <button className="ghost" onClick={logout}>
+          <button className="btn-secondary py-2" onClick={logout}>
             Logout
           </button>
         </div>
-
       ) : null}
     </header>
   );

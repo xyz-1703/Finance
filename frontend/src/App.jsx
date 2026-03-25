@@ -3,7 +3,6 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import TopBar from "./components/TopBar";
 import DashboardPage from "./pages/DashboardPage";
-import LoginPage from "./pages/LoginPage";
 
 import MarketHomePage from "./pages/market/MarketHomePage";
 import StockInsightsPage from "./pages/market/StockInsightsPage";
@@ -20,6 +19,8 @@ import AutomatedPortfolioPage from "./pages/AutomatedPortfolioPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import SettingsPage from "./pages/SettingsPage";
 import TradePage from "./pages/TradePage";
+import PredictionPage from "./pages/PredictionPage";
+import ForecastingPage from "./pages/ForecastingPage";
 
 
 function RequireAuth({ children }) {
@@ -66,11 +67,11 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<HomePage />} />
 
         <Route path="/market-home" element={<MarketHomePage />} />
         <Route path="/market/:symbol" element={<StockInsightsPage />} />
 
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
@@ -126,6 +127,22 @@ export default function App() {
           element={
             <RequireAuth>
               <SettingsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/prediction"
+          element={
+            <RequireAuth>
+              <PredictionPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/forecasting"
+          element={
+            <RequireAuth>
+              <ForecastingPage />
             </RequireAuth>
           }
         />

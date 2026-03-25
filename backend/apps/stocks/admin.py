@@ -8,5 +8,6 @@ class StockMasterAdmin(admin.ModelAdmin):
 
 @admin.register(StockPrice)
 class StockPriceAdmin(admin.ModelAdmin):
-    list_display = ("symbol", "price", "updated_at")
-    list_filter = ("symbol", "updated_at")
+    list_display = ("stock", "timestamp", "close", "volume")
+    list_filter = ("stock", "timestamp")
+    search_fields = ("stock__symbol", "stock__name")

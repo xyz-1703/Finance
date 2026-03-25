@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/axios';
+import api from '../api/client';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,21 +15,30 @@ const HomePage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
-      // If we use email for login as per config, let's map username to email or just send it
-      // The simplejwt TokenObtainPairView expects username and password. For email-based login, username field is the email.
-      const response = await api.post('login', {
-        email: formData.username, // Sending to email field or username field depending on backend
+      // The simplejwt TokenObtainPairView expects username and password. 
+      // Our backend handles both email and username via the custom backend.
+      const response = await api.post('/auth/token/', {
+        email: formData.username, 
         username: formData.username, 
         password: formData.password
       });
+      
       localStorage.setItem('access_token', response.data.access);
       if (response.data.refresh) {
           localStorage.setItem('refresh_token', response.data.refresh);
       }
-      navigate('/dashboard'); // Or wherever it leads
+      if (response.data.user) {
+          localStorage.setItem('current_user', JSON.stringify(response.data.user));
+      }
+
+      window.dispatchEvent(new Event("auth-changed"));
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,8 +137,12 @@ const HomePage = () => {
                 />
               </div>
               
-              <button type="submit" className="w-full btn-primary py-3 mt-4 text-lg font-semibold shadow-lg shadow-finance-primary/30">
-                Sign In
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full btn-primary py-3 mt-4 text-lg font-semibold shadow-lg shadow-finance-primary/30 disabled:opacity-50"
+              >
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
             

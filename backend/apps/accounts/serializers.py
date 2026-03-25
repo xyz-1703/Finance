@@ -19,16 +19,34 @@ class TelegramLinkCodeVerifySerializer(serializers.Serializer):
 
 
 class RegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
+    telegram_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    def validate_username(self, value: str) -> str:
+        if not value:
+            return value
+        normalized = value.strip()
+        if User.objects.filter(username__iexact=normalized).exists():
+            raise serializers.ValidationError("Username is already taken.")
+        return normalized
 
     def validate_email(self, value: str) -> str:
         normalized = value.strip().lower()
         if User.objects.filter(email__iexact=normalized).exists():
             raise serializers.ValidationError("Email is already registered.")
         return normalized
+
+    def validate_telegram_id(self, value: str) -> str:
+        if not value:
+            return value
+        clean_val = value.lstrip('@')
+        if User.objects.filter(telegram_username__iexact=clean_val).exists():
+            raise serializers.ValidationError("This Telegram username is already linked to another account.")
+        return clean_val
 
     def validate_password(self, value: str) -> str:
         validate_password(value)
@@ -40,13 +58,25 @@ class LogoutSerializer(serializers.Serializer):
 
 
 class PasswordOtpRequestSerializer(serializers.Serializer):
-    telegram_username = serializers.CharField(max_length=255)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    telegram_username = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        if not attrs.get("email") and not attrs.get("telegram_username"):
+            raise serializers.ValidationError("Either email or telegram_username is required.")
+        return attrs
 
 
 class PasswordResetSerializer(serializers.Serializer):
-    telegram_username = serializers.CharField(max_length=255)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    telegram_username = serializers.CharField(max_length=255, required=False, allow_blank=True)
     otp_code = serializers.CharField(max_length=10)
     new_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if not attrs.get("email") and not attrs.get("telegram_username"):
+            raise serializers.ValidationError("Either email or telegram_username is required.")
+        return attrs
 
     def validate_new_password(self, value: str) -> str:
         validate_password(value)

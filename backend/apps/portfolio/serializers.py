@@ -22,11 +22,11 @@ class HoldingSerializer(serializers.ModelSerializer):
         fields = ("id", "symbol", "name", "quantity", "average_buy_price", "current_price", "total_value", "profit_loss")
 
     def get_latest_price_obj(self, obj):
-        return StockPrice.objects.filter(stock=obj.stock).first()
+        return StockPrice.objects.filter(stock=obj.stock).order_by("-timestamp").first()
 
     def get_current_price(self, obj):
         price_obj = self.get_latest_price_obj(obj)
-        return price_obj.price if price_obj else None
+        return price_obj.close if price_obj else None
 
     def get_total_value(self, obj):
         price = self.get_current_price(obj)
@@ -40,19 +40,23 @@ class HoldingSerializer(serializers.ModelSerializer):
 class PortfolioSerializer(serializers.ModelSerializer):
     holdings = HoldingSerializer(many=True, read_only=True)
     transactions = TransactionSerializer(many=True, read_only=True)
-    total_portfolio_value = serializers.SerializerMethodField()
-    total_profit_loss = serializers.SerializerMethodField()
+    total_value = serializers.SerializerMethodField()
+    total_quantity = serializers.SerializerMethodField()
+    profit_loss = serializers.SerializerMethodField()
 
     class Meta:
         model = Portfolio
-        fields = ("id", "user", "name", "sector", "is_automated", "target_allocation", "created_at", "holdings", "transactions", "total_portfolio_value", "total_profit_loss")
+        fields = ("id", "user", "name", "sector", "is_automated", "target_allocation", "created_at", "holdings", "transactions", "total_value", "total_quantity", "profit_loss")
         read_only_fields = ("user",)
 
-    def get_total_portfolio_value(self, obj):
+    def get_total_value(self, obj):
         holdings = obj.holdings.all()
         return sum(HoldingSerializer(h).get_total_value(h) for h in holdings)
 
-    def get_total_profit_loss(self, obj):
+    def get_total_quantity(self, obj):
+        return sum(h.quantity for h in obj.holdings.all())
+
+    def get_profit_loss(self, obj):
         holdings = obj.holdings.all()
         return sum(HoldingSerializer(h).get_profit_loss(h) for h in holdings)
 

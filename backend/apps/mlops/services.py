@@ -1,21 +1,36 @@
-from __future__ import annotations
+try:
+    import mlflow
+except ImportError:
+    mlflow = None
 
-import mlflow
-import numpy as np
-from django.conf import settings
-from sklearn.cluster import KMeans
-from sklearn.linear_model import LinearRegression
-from statsmodels.tsa.arima.model import ARIMA
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+try:
+    from sklearn.cluster import KMeans
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import StandardScaler
+except ImportError:
+    KMeans = LinearRegression = StandardScaler = None
+
+try:
+    from statsmodels.tsa.arima.model import ARIMA
+except ImportError:
+    ARIMA = None
 
 from apps.portfolio.models import Portfolio, Holding
 from apps.stocks.models import StockMaster
 import yfinance as yf
 
-
 from .models import PredictionRun, StockCluster
 
 
 def _cluster_symbols(*, symbols: list[str], n_clusters: int, created_by, portfolio: Portfolio | None = None):
+    if np is None or KMeans is None:
+        raise ValueError("ML Clustering dependencies (numpy, sklearn) are not available in this environment.")
+    
     stocks = list(StockMaster.objects.filter(symbol__in=symbols))
     if len(stocks) < n_clusters:
         # Fallback: adjust clusters if user has fewer stocks than requested
@@ -47,11 +62,13 @@ def _cluster_symbols(*, symbols: list[str], n_clusters: int, created_by, portfol
 
     matrix = np.array(features)
     # Basic normalization to improve KMeans performance
-    from sklearn.preprocessing import StandardScaler
-    try:
-        scaler = StandardScaler()
-        matrix_scaled = scaler.fit_transform(matrix)
-    except Exception:
+    if StandardScaler:
+        try:
+            scaler = StandardScaler()
+            matrix_scaled = scaler.fit_transform(matrix)
+        except Exception:
+            matrix_scaled = matrix
+    else:
         matrix_scaled = matrix
 
     model = KMeans(n_clusters=n_clusters, random_state=42, n_init="auto")
@@ -94,74 +111,62 @@ def run_portfolio_clustering_for_portfolio(*, portfolio_id: int, n_clusters: int
 
 
 def run_prediction(*, symbol: str, model_type: str, created_by):
+    if np is None:
+        raise ValueError("Numpy is required for prediction but is not available.")
+
     stock = StockMaster.objects.get(symbol=symbol)
-    price_data = list(stock.prices.order_by("updated_at").values_list("price", flat=True))
+    price_data = list(stock.prices.order_by("timestamp").values_list("close", flat=True))
     if len(price_data) < 5:
         raise ValueError("At least 5 price points required for prediction")
 
     series = np.array([float(x) for x in price_data])
-    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+    
+    # MLflow tracking
+    tracking_uri = getattr(settings, 'MLFLOW_TRACKING_URI', None)
+    if mlflow and tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
+        active_run = mlflow.start_run(run_name=f"{symbol}-{model_type}")
+    else:
+        active_run = None
 
-    with mlflow.start_run(run_name=f"{symbol}-{model_type}") as run:
+    try:
         if model_type == PredictionRun.MODEL_LINEAR:
+            if LinearRegression is None:
+                raise ValueError("LinearRegression is not available.")
             x = np.arange(len(series)).reshape(-1, 1)
             model = LinearRegression()
             model.fit(x, series)
             prediction = float(model.predict(np.array([[len(series)]]))[0])
             score = float(model.score(x, series))
             metrics = {"r2": score}
-            mlflow.log_metric("r2", score)
+            if active_run:
+                mlflow.log_metric("r2", score)
         else:
+            if ARIMA is None:
+                raise ValueError("ARIMA is not available.")
             arima_model = ARIMA(series, order=(2, 1, 1)).fit()
             forecast = arima_model.forecast(steps=1)
             prediction = float(forecast[0])
             aic = float(arima_model.aic)
             metrics = {"aic": aic}
-            mlflow.log_metric("aic", aic)
+            if active_run:
+                mlflow.log_metric("aic", aic)
 
-        mlflow.log_param("symbol", symbol)
-        mlflow.log_param("model_type", model_type)
+        if active_run:
+            mlflow.log_param("symbol", symbol)
+            mlflow.log_param("model_type", model_type)
+            run_id = active_run.info.run_id
+        else:
+            run_id = "local_only"
 
         return PredictionRun.objects.create(
             stock=stock,
             model_type=model_type,
             prediction=prediction,
             metrics=metrics,
-            mlflow_run_id=run.info.run_id,
+            mlflow_run_id=run_id,
             created_by=created_by,
         )
-
-    if len(price_data) < 5:
-        raise ValueError("At least 5 price points required for prediction")
-
-    series = np.array([float(x) for x in price_data])
-    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
-
-    with mlflow.start_run(run_name=f"{symbol}-{model_type}") as run:
-        if model_type == PredictionRun.MODEL_LINEAR:
-            x = np.arange(len(series)).reshape(-1, 1)
-            model = LinearRegression()
-            model.fit(x, series)
-            prediction = float(model.predict(np.array([[len(series)]]))[0])
-            score = float(model.score(x, series))
-            metrics = {"r2": score}
-            mlflow.log_metric("r2", score)
-        else:
-            arima_model = ARIMA(series, order=(2, 1, 1)).fit()
-            forecast = arima_model.forecast(steps=1)
-            prediction = float(forecast[0])
-            aic = float(arima_model.aic)
-            metrics = {"aic": aic}
-            mlflow.log_metric("aic", aic)
-
-        mlflow.log_param("symbol", symbol)
-        mlflow.log_param("model_type", model_type)
-
-        return PredictionRun.objects.create(
-            stock=stock,
-            model_type=model_type,
-            prediction=prediction,
-            metrics=metrics,
-            mlflow_run_id=run.info.run_id,
-            created_by=created_by,
-        )
+    finally:
+        if active_run:
+            mlflow.end_run()

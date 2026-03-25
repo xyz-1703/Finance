@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class StockMaster(models.Model):
@@ -14,6 +15,9 @@ class StockMaster(models.Model):
     name = models.CharField(max_length=255)
     market = models.CharField(max_length=20, choices=MARKET_CHOICES, default='NSE')
     sector = models.CharField(max_length=100, blank=True, null=True)
+    pe_ratio = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    high_52week = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    low_52week = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"{self.symbol} - {self.name} ({self.market})"
@@ -21,13 +25,16 @@ class StockMaster(models.Model):
 
 class StockPrice(models.Model):
     stock = models.ForeignKey(StockMaster, on_delete=models.CASCADE, related_name="prices")
-    symbol = models.CharField(max_length=20)  # Redundant but easy access
-    price = models.DecimalField(max_digits=18, decimal_places=4)
-    updated_at = models.DateTimeField(auto_now=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    open = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    high = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    low = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    close = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    volume = models.BigIntegerField(default=0)
 
     class Meta:
-        ordering = ["-updated_at"]
+        ordering = ["-timestamp"]
+        unique_together = (('stock', 'timestamp'),)
 
     def __str__(self) -> str:
-        return f"{self.symbol}: {self.price} at {self.updated_at}"
-
+        return f"{self.stock.symbol}: {self.close} at {self.timestamp}"

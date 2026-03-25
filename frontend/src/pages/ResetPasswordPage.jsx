@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import api from '../api/axios';
+import api from '../api/client';
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || '';
-  const telegram_id = location.state?.telegram_id || '';
+  const telegramUsername = location.state?.telegram_username || '';
   const code = location.state?.code || '';
   
   const [newPassword, setNewPassword] = useState('');
@@ -16,7 +16,7 @@ const ResetPasswordPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if ((!email && !telegram_id) || !code) {
+    if ((!email && !telegramUsername) || !code) {
       setError("Session expired. Please restart the password reset process.");
       return;
     }
@@ -27,10 +27,15 @@ const ResetPasswordPage = () => {
     setError('');
     setLoading(true);
     try {
-      await api.post('reset-password', { email, telegram_id, code, new_password: newPassword });
+      await api.post('/auth/password/reset/', { 
+        email, 
+        telegram_username: telegramUsername, 
+        otp_code: code, 
+        new_password: newPassword 
+      });
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to reset password');
+      setError(err.response?.data?.detail || 'Failed to reset password');
     } finally {
       setLoading(false);
     }

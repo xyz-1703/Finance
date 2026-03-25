@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.mail import send_mail
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -47,11 +48,18 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        email = serializer.validated_data["email"]
+        username = serializer.validated_data.get("username") or email
+        telegram_id = serializer.validated_data.get("telegram_id")
+
         user = User.objects.create_user(
-            email=serializer.validated_data["email"],
+            email=email,
+            username=username,
             password=serializer.validated_data["password"],
             first_name=serializer.validated_data.get("first_name", ""),
             last_name=serializer.validated_data.get("last_name", ""),
+            telegram_username=telegram_id,
+            telegram_chat_id=telegram_id, # Assuming chat_id = username initially if not resolved
         )
         refresh = RefreshToken.for_user(user)
         return Response(
@@ -87,19 +95,39 @@ class PasswordOtpRequestView(APIView):
         serializer = PasswordOtpRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = get_user_by_telegram_username(serializer.validated_data["telegram_username"])
-        if user is None or not user.telegram_chat_id:
-            # Fallback: try to resolve if user exists but lacks chat_id
-            user = User.objects.filter(telegram_username__iexact=serializer.validated_data["telegram_username"].lstrip("@")).first()
-            if user:
+        email = serializer.validated_data.get("email")
+        tg_username = serializer.validated_data.get("telegram_username")
+        
+        user = None
+        if email:
+            user = User.objects.filter(email__iexact=email).first()
+        if not user and tg_username:
+            user = get_user_by_telegram_username(tg_username)
+            if user and not user.telegram_chat_id:
                 resolve_telegram_chat_id(user)
-                
-        if user is None or not user.telegram_chat_id:
-            return Response({"detail": "Telegram account is not linked or not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user is None:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             code = issue_otp(user)
-            send_telegram_message(user.telegram_chat_id, f"Your password reset OTP: {code}")
+            # Send via Email if available
+            if user.email:
+                send_mail(
+                    "Password Reset OTP",
+                    f"Your stock portfolio reset OTP is: {code}",
+                    getattr(settings, 'EMAIL_HOST_USER', 'noreply@stockportfolio.com'),
+                    [user.email],
+                    fail_silently=True,
+                )
+            
+            # Send via Telegram if available
+            if user.telegram_chat_id:
+                send_telegram_message(user.telegram_chat_id, f"Your password reset OTP: {code}")
+            
+            # LOCAL DEVELOPMENT LOG
+            print(f"\n🔐 PASSWORD RESET OTP FOR {user.email}: {code} \n")
+            
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
@@ -113,9 +141,17 @@ class PasswordResetView(APIView):
         serializer = PasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = get_user_by_telegram_username(serializer.validated_data["telegram_username"])
+        email = serializer.validated_data.get("email")
+        tg_username = serializer.validated_data.get("telegram_username")
+        
+        user = None
+        if email:
+            user = User.objects.filter(email__iexact=email).first()
+        if not user and tg_username:
+            user = get_user_by_telegram_username(tg_username)
+
         if user is None:
-            return Response({"detail": "Invalid telegram user."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Invalid user."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not validate_otp(user, serializer.validated_data["otp_code"]):
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)

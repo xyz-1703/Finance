@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/axios';
+import api from '../api/client';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -18,14 +18,14 @@ const ForgotPasswordPage = () => {
     // Email contains @ in the middle (e.g. user@gmail.com)
     // Telegram usernames START with @ (e.g. @xyz1797)
     const isEmail = identifier.includes('@') && !identifier.startsWith('@');
-    const payload = isEmail ? { email: identifier } : { telegram_id: identifier.replace(/^@/, '') };
+    const payload = isEmail ? { email: identifier } : { telegram_username: identifier.replace(/^@/, '') };
 
     try {
-      await api.post('forgot-password', payload);
+      await api.post('/auth/password/otp/request/', payload);
       // Pass the payload state to verify-otp page
       navigate('/verify-otp', { state: payload });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send OTP. Ensure your identifier is registered.');
+      setError(err.response?.data?.detail || 'Failed to send OTP. Ensure your identifier is registered.');
     } finally {
       setLoading(false);
     }
