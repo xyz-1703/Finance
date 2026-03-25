@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
@@ -6,7 +6,7 @@ import api from "../api/client";
 export default function DashboardPage() {
   const [portfolios, setPortfolios] = useState([]);
   const [newPortfolioName, setNewPortfolioName] = useState("");
-=======
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -14,12 +14,12 @@ import api from "../api/client";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState(null);
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-<<<<<<< HEAD
+
     fetchPortfolios();
   }, []);
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
         </div>
       </section>
     </div>
-=======
+
     const loadProfile = async () => {
       setLoading(true);
       setError("");
@@ -144,6 +144,6 @@ export default function DashboardPage() {
         </div>
       </section>
     </main>
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
   );
 }

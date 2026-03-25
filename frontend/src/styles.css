@@ -43,20 +43,20 @@ body::before {
   align-items: center;
   color: #f8fbff;
   margin-bottom: 1.5rem;
-<<<<<<< HEAD
-=======
+
+
   gap: 1rem;
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 }
 
 .topbar .brand {
   font-weight: 700;
   letter-spacing: 1px;
-<<<<<<< HEAD
-=======
+
+
   color: #f8fbff;
   text-decoration: none;
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 }
 
 .topbar nav a {
@@ -65,8 +65,8 @@ body::before {
   margin: 0 0.8rem;
 }
 
-<<<<<<< HEAD
-=======
+
+
 .topbar nav {
   display: flex;
   flex-wrap: wrap;
@@ -91,7 +91,7 @@ body::before {
   font-weight: 700;
 }
 
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 .layout,
 .dashboard-grid {
   display: grid;
@@ -164,8 +164,8 @@ button.ghost {
   gap: 0.5rem;
 }
 
-<<<<<<< HEAD
-=======
+
+
 .forgot-wrap {
   margin-top: 0.75rem;
 }
@@ -228,7 +228,7 @@ button.ghost {
   width: min(480px, 100%);
 }
 
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 .error {
   color: var(--danger);
 }
@@ -263,8 +263,8 @@ button.ghost {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-<<<<<<< HEAD
-=======
+
+
 
   .quick-grid {
     grid-template-columns: 1fr;
@@ -274,7 +274,7 @@ button.ghost {
     flex-direction: column;
     align-items: flex-start;
   }
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
 }
 
 .market-shell,

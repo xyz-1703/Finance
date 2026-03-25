@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
@@ -86,7 +86,7 @@ const LoginPage = () => {
   };
   
   export default LoginPage;
-=======
+
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -278,4 +278,4 @@ export default function LoginPage({ mode = "login" }) {
     </main>
   );
 }
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+

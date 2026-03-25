@@ -43,8 +43,8 @@ export default function StockInsightsPage() {
   if (error) return <main className="card error">{error}</main>;
   if (!data) return null;
 
-<<<<<<< HEAD
-=======
+
+
   const isInr = (data.currency || "").toUpperCase() === "INR";
   const priceFormatter = (value) => {
     const num = Number(value || 0);
@@ -63,7 +63,7 @@ export default function StockInsightsPage() {
 
   const volumeTooltipFormatter = (value, name) => [volumeFormatter(value), String(name).toUpperCase()];
 
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
   return (
     <main className="insight-shell">
       <section className="card insight-head">
@@ -73,11 +73,11 @@ export default function StockInsightsPage() {
       </section>
 
       <section className="stats-grid">
-<<<<<<< HEAD
+
         <article className="card"><h3>Market Price</h3><p>INR {data.market_price}</p></article>
-=======
+
         <article className="card"><h3>Market Price</h3><p>{priceFormatter(data.market_price)}</p></article>
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
         <article className="card"><h3>P/E Ratio</h3><p>{data.fundamentals.pe_ratio}</p></article>
         <article className="card"><h3>ROE</h3><p>{data.fundamentals.roe}</p></article>
         <article className="card"><h3>6M Return</h3><p>{data.statistics.six_month_return_pct}%</p></article>
@@ -92,13 +92,13 @@ export default function StockInsightsPage() {
             <LineChart data={data.trend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" minTickGap={28} />
-<<<<<<< HEAD
+
               <YAxis />
               <Tooltip />
-=======
+
               <YAxis tickFormatter={priceFormatter} />
               <Tooltip formatter={trendTooltipFormatter} />
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
               <Legend />
               <Line type="monotone" dataKey="close" stroke="#00a77f" dot={false} strokeWidth={2} />
               <Line type="monotone" dataKey="open" stroke="#335d8c" dot={false} strokeWidth={1.5} />
@@ -114,13 +114,13 @@ export default function StockInsightsPage() {
             <BarChart data={data.trend.slice(-40)}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" minTickGap={22} />
-<<<<<<< HEAD
+
               <YAxis />
               <Tooltip />
-=======
+
               <YAxis tickFormatter={volumeFormatter} />
               <Tooltip formatter={volumeTooltipFormatter} />
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
+
               <Bar dataKey="volume" fill="#4a7eb8" />
             </BarChart>
           </ResponsiveContainer>

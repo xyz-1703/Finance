@@ -112,8 +112,6 @@ npm run dev
 
 Visit `http://localhost:5173` to access the app. Backend API is at `http://localhost:8000/api`.
 
-<<<<<<< HEAD
-=======
 ### Celery Timely Market Refresh (yfinance)
 
 Celery prefetches watchlist data on a schedule so market rows are ready without blocking page loads.
@@ -140,7 +138,6 @@ Celery prefetches watchlist data on a schedule so market rows are ready without 
    - `WATCHLIST_CELERY_SNAPSHOT_LIMIT` (default `120`)
    - `WATCHLIST_PRICE_SNAPSHOT_LIMIT` (default `0` for fast API responses)
 
->>>>>>> f676874015cfdcfa865c247090c40e9cf22a2aba
 ## API Highlights
 
 - Auth: `/api/auth/google/`, `/api/auth/token/refresh/`, `/api/auth/profile/`
