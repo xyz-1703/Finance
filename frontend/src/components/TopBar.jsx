@@ -25,15 +25,14 @@ export default function TopBar({ isAuthenticated }) {
   };
 
   return (
-    <header className="topbar px-6">
-      <Link to="/" className="brand-logo">QuantVista</Link>
+    <header className="flex items-center justify-between py-5 px-8 border-b border-slate-200 bg-white sticky top-0 z-40">
+      <Link to="/" className="text-xl font-black tracking-tighter text-slate-800 hover:text-emerald-500 transition-colors">QuantVista</Link>
       <nav className="flex items-center gap-2">
-        <Link to="/" className="nav-link">Home</Link>
-        {isAuthenticated ? <Link to="/dashboard" className="nav-link">Dashboard</Link> : null}
-        {isAuthenticated ? <Link to="/portfolio" className="nav-link">Portfolio</Link> : null}
-        {isAuthenticated ? <Link to="/trade" className="nav-link">Trade</Link> : null}
-        {isAuthenticated ? <Link to="/ml" className="nav-link text-finance-primary/80">ML</Link> : null}
-        {isAuthenticated ? <Link to="/settings" className="nav-link">Settings</Link> : null}
+        <Link to="/dashboard" className="nav-link">Dashboard</Link>
+        <Link to="/portfolio" className="text-slate-500 hover:text-slate-800 font-bold text-xs uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-slate-50 transition-all">Portfolio</Link>
+        <Link to="/trade" className="text-slate-500 hover:text-slate-800 font-bold text-xs uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-slate-50 transition-all">Trade</Link>
+        <Link to="/ml" className="text-emerald-500 hover:text-emerald-600 font-black text-xs uppercase tracking-widest px-4 py-2 rounded-lg bg-emerald-50 transition-all">ML</Link>
+        {isAuthenticated ? <Link to="/settings" className="text-slate-500 hover:text-slate-800 font-bold text-xs uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-slate-50 transition-all">Settings</Link> : null}
         {!isAuthenticated ? <Link to="/login" className="nav-link">Login</Link> : null}
         {!isAuthenticated ? <Link to="/register" className="nav-link">Register</Link> : null}
       </nav>
@@ -45,7 +44,7 @@ export default function TopBar({ isAuthenticated }) {
           >
             {userInitial}
           </button>
-          <button className="btn-secondary py-2" onClick={logout}>
+          <button className="px-5 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={logout}>
             Logout
           </button>
         </div>

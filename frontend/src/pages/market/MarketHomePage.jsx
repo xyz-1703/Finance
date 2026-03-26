@@ -55,17 +55,17 @@ export default function MarketHomePage() {
   };
 
   return (
-    <main className="app-shell animate-fade-in">
-      <section className="glass-card p-10 mb-8 flex flex-col md:flex-row justify-between items-center gap-8">
+    <main className="app-shell animate-fade-in bg-white min-h-screen">
+      <section className="bg-[#f7f9fa] rounded-3xl p-10 mb-8 flex flex-col md:flex-row justify-between items-center gap-8 border border-slate-200">
         <div className="max-w-2xl">
           <div className="flex items-center gap-3 mb-4">
-            <span className="badge badge-primary">NSE Equities</span>
-            <span className="text-finance-muted text-xs font-mono uppercase tracking-widest">Real-time Feed</span>
+            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">NSE Equities</span>
+            <span className="text-slate-400 text-xs font-mono uppercase tracking-widest">Real-time Feed</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-white">Market Screener</h1>
-          <p className="text-finance-muted text-lg leading-relaxed">
-            Live watchlist powered by <span className="text-white font-medium italic">yfinance</span>. Analyze trends, statistics, and 
-            <span className="text-finance-primary font-semibold"> FinBERT </span> sentiment scores for Indian stocks.
+          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-slate-800">Market Screener</h1>
+          <p className="text-slate-500 text-lg leading-relaxed">
+            Live watchlist powered by <span className="text-slate-900 font-medium italic">yfinance</span>. Analyze trends, statistics, and 
+            <span className="text-emerald-500 font-semibold"> FinBERT </span> sentiment scores for Indian stocks.
           </p>
         </div>
         <div className="flex flex-col sm:row gap-4 w-full md:w-auto">
@@ -97,14 +97,14 @@ export default function MarketHomePage() {
         </div>
       </section>
 
-      <section className="glass-card p-2 mb-8 flex flex-wrap gap-2">
+      <section className="bg-slate-50 border border-slate-200 p-2 mb-8 rounded-2xl flex flex-wrap gap-2">
         {sectors.map((item) => (
           <button
             key={item}
             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
               item === sector 
-                ? "bg-finance-primary text-white shadow-lg shadow-finance-primary/20" 
-                : "text-finance-muted hover:text-white hover:bg-white/5"
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
+                : "text-slate-400 hover:text-slate-800 hover:bg-white"
             }`}
             onClick={() => setSector(item)}
           >
@@ -113,38 +113,38 @@ export default function MarketHomePage() {
         ))}
       </section>
 
-      <section className="glass-card overflow-hidden">
+      <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {error ? (
-          <div className="p-8 bg-rose-500/10 border-b border-rose-500/20 text-rose-500 flex items-center gap-3">
+          <div className="p-8 bg-rose-50 border-b border-rose-100 text-rose-500 flex items-center gap-3">
              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
              {error}
           </div>
         ) : null}
         
-        <table className="modern-table">
+        <table className="w-full border-separate border-spacing-0">
           <thead>
-            <tr>
-              <th className="pl-6">Asset Symbol</th>
-              <th>Authority Name</th>
-              <th>P/E</th>
-              <th>Discount</th>
-              <th>Signal</th>
-              <th>Market</th>
-              <th className="text-right pr-6">Order Control</th>
+            <tr className="bg-slate-50">
+              <th className="pl-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Asset Symbol</th>
+              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Authority Name</th>
+              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">P/E</th>
+              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Discount</th>
+              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Signal</th>
+              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Market</th>
+              <th className="text-right pr-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Order Control</th>
             </tr>
           </thead>
           <tbody>
             {filteredStocks.map((item) => (
-              <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors">
-                <td className="pl-6 py-5">
-                   <span className="text-finance-primary font-black tracking-tighter text-lg">{item.symbol}</span>
+              <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                <td className="pl-6 py-5 border-b border-slate-100">
+                   <span className="text-emerald-500 font-black tracking-tighter text-lg">{item.symbol}</span>
                 </td>
-                <td>
-                   <div className="text-white font-bold text-sm">{item.name}</div>
-                   <div className="text-[10px] text-finance-muted font-bold uppercase tracking-widest">{item.sector || 'General'}</div>
+                <td className="border-b border-slate-100">
+                   <div className="text-slate-800 font-bold text-sm">{item.name}</div>
+                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.sector || 'General'}</div>
                 </td>
-                <td>
-                   <span className="text-white font-mono text-xs">{item.pe_ratio || '-'}</span>
+                <td className="border-b border-slate-100">
+                   <span className="text-slate-600 font-mono text-xs">{item.pe_ratio || '-'}</span>
                 </td>
                 <td>
                    <div className="flex flex-col">

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 
 export default function PortfolioPage() {
+  const navigate = useNavigate();
+  const isAuthenticated = Boolean(localStorage.getItem("access_token"));
   const [portfolios, setPortfolios] = useState([]);
   const [holdings, setHoldings] = useState([]);
   const [stocks, setStocks] = useState([]);
@@ -20,23 +22,26 @@ export default function PortfolioPage() {
   const loadData = async () => {
     setLoading(true);
     setError("");
+    
     try {
-      const [portfolioResponse, holdingsResponse, stockResponse] = await Promise.all([
-        api.get("/portfolio/portfolios/"),
-        api.get("/portfolio/holdings/"),
-        api.get("/insights/stocks/"),
-      ]);
-      setPortfolios(portfolioResponse.data || []);
-      setHoldings(holdingsResponse.data || []);
-      setStocks(stockResponse.data || []);
-      if (!selectedPortfolio && portfolioResponse.data?.length) {
-        setSelectedPortfolio(String(portfolioResponse.data[0].id));
+      const portRes = await api.get("/portfolio/portfolios/");
+      setPortfolios(portRes.data || []);
+      if (!selectedPortfolio && portRes.data?.length) {
+        setSelectedPortfolio(String(portRes.data[0].id));
       }
-    } catch (err) {
-      setError(err.response?.data?.detail || "Unable to load portfolio data.");
-    } finally {
-      setLoading(false);
-    }
+    } catch(err) {}
+
+    try {
+      const holdRes = await api.get("/portfolio/holdings/");
+      setHoldings(holdRes.data || []);
+    } catch(err) {}
+
+    try {
+      const stockRes = await api.get("/insights/stocks/");
+      setStocks(stockRes.data || []);
+    } catch(err) {}
+    
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -45,6 +50,7 @@ export default function PortfolioPage() {
 
   const createPortfolio = async (event) => {
     event.preventDefault();
+    if (!isAuthenticated) return navigate('/login');
     setMessage("");
     setError("");
     if (!name.trim()) {
@@ -65,6 +71,7 @@ export default function PortfolioPage() {
 
   const addHolding = async (event) => {
     event.preventDefault();
+    if (!isAuthenticated) return navigate('/login');
     setMessage("");
     setError("");
     if (!selectedPortfolio || !selectedStock) {
@@ -103,6 +110,7 @@ export default function PortfolioPage() {
   };
 
   const runClustering = async () => {
+    if (!isAuthenticated) return navigate('/login');
     setMessage("");
     setError("");
     if (!selectedPortfolio) {
@@ -125,16 +133,16 @@ export default function PortfolioPage() {
     (item) => String(item.portfolio) === String(selectedPortfolio)
   );
   return (
-    <main className="app-shell animate-fade-in">
+    <main className="max-w-[1400px] mx-auto px-6 py-10 animate-fade-in bg-white min-h-screen">
       <header className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <span className="badge badge-primary">Portfolio Management</span>
-          <span className="text-finance-muted text-xs font-mono uppercase tracking-widest">Analytics & Holdings</span>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">Portfolio Management</span>
+          <span className="text-slate-400 text-xs font-mono uppercase tracking-widest">Analytics & Holdings</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-white">Asset Control</h1>
-        <p className="text-finance-muted text-lg leading-relaxed max-w-3xl">
+        <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-slate-800">Asset Control</h1>
+        <p className="text-slate-500 text-lg leading-relaxed max-w-3xl">
           Create multiple portfolios, manage your long-term holdings, and use 
-          <span className="text-finance-primary font-semibold"> K-Means Clustering </span> to analyze asset distribution.
+          <span className="text-emerald-500 font-semibold"> K-Means Clustering </span> to analyze asset distribution.
         </p>
       </header>
 
@@ -155,41 +163,41 @@ export default function PortfolioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Management Tools */}
         <div className="lg:col-span-1 space-y-8">
-          <section className="glass-card p-8 bg-finance-primary/5 border-finance-primary/20">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <svg className="h-5 w-5 text-finance-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <section className="bg-slate-50 border border-slate-200 rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               New Portfolio
             </h2>
             <form onSubmit={createPortfolio} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-finance-muted uppercase tracking-widest mb-1.5" htmlFor="portfolio-name">Name</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5" htmlFor="portfolio-name">Name</label>
                 <input
                   id="portfolio-name"
-                  className="input-field"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="e.g. Retirement Fund"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
-              <button className="btn-primary w-full py-3" type="submit">Initialize Portfolio</button>
+              <button className="bg-emerald-500 text-white w-full py-4 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all" type="submit">Initialize Portfolio</button>
             </form>
           </section>
 
-          <section className="glass-card p-8">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <svg className="h-5 w-5 text-finance-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
               </svg>
               Add Holding
             </h2>
             <form onSubmit={addHolding} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-finance-muted uppercase tracking-widest mb-1.5" htmlFor="portfolio-select">Target Portfolio</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5" htmlFor="portfolio-select">Target Portfolio</label>
                 <select
                   id="portfolio-select"
-                  className="input-field appearance-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-emerald-500 transition-all appearance-none"
                   value={selectedPortfolio}
                   onChange={(event) => setSelectedPortfolio(event.target.value)}
                 >
@@ -200,10 +208,10 @@ export default function PortfolioPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-finance-muted uppercase tracking-widest mb-1.5" htmlFor="stock-select">Asset Symbol</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5" htmlFor="stock-select">Asset Symbol</label>
                 <select
                   id="stock-select"
-                  className="input-field appearance-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-emerald-500 transition-all appearance-none"
                   value={selectedStock}
                   onChange={(event) => setSelectedStock(event.target.value)}
                 >
@@ -215,54 +223,53 @@ export default function PortfolioPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-finance-muted uppercase tracking-widest mb-1.5" htmlFor="holding-quantity">Qty</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5" htmlFor="holding-quantity">Qty</label>
                   <input
                     id="holding-quantity"
-                    className="input-field"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-emerald-500 transition-all"
                     value={quantity}
                     onChange={(event) => setQuantity(event.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-finance-muted uppercase tracking-widest mb-1.5" htmlFor="holding-price">Avg Price</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5" htmlFor="holding-price">Avg Price</label>
                   <input
                     id="holding-price"
-                    className="input-field"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-emerald-500 transition-all"
                     value={averageBuyPrice}
                     onChange={(event) => setAverageBuyPrice(event.target.value)}
                   />
                 </div>
               </div>
-              <button className="btn-secondary w-full py-3" type="submit">Verify & Add</button>
+              <button className="w-full py-4 bg-slate-800 text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-slate-800/10 hover:bg-slate-700 transition-all" type="submit">Verify & Add</button>
             </form>
           </section>
         </div>
 
         {/* Right Column: Tables & Analysis */}
         <div className="lg:col-span-2 space-y-8">
-          <section className="glass-card overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
-              <h2 className="text-xl font-bold text-white">Active Portfolios</h2>
-              <span className="text-xs font-bold text-finance-muted uppercase tracking-widest">{portfolios.length} Total</span>
+          <section className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-800">Active Portfolios</h2>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{portfolios.length} Total</span>
             </div>
-            <table className="modern-table">
+            <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr>
-                  <th>Identity</th>
-                  <th>Asset Count</th>
-                  <th className="text-right">Total Valuation</th>
-                  <th className="text-right">Return (PnL)</th>
-                  <th className="text-right">Deployment Date</th>
+                <tr className="bg-slate-50">
+                  <th className="pl-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Identity</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Asset Count</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Name</th>
+                  <th className="py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Total Valuation</th>
+                  <th className="py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Return (PnL)</th>
+                  <th className="pr-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Deployment Date</th>
                 </tr>
               </thead>
               <tbody>
                 {portfolios.map((item) => (
-                  <tr key={item.id}>
-                    <td><span className="bg-white/5 px-2 py-1 rounded text-[10px] font-mono font-bold text-finance-primary border border-white/5">#{item.id}</span></td>
-                    <td className="text-white font-bold">
-                       {item.name}
-                    </td>
-                    <td className="text-center text-xs font-bold text-finance-muted">
+                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="pl-6 py-4 border-b border-slate-50"><span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-mono font-bold text-emerald-600 border border-slate-200">#{item.id}</span></td>
+                    <td className="py-4 border-b border-slate-50 text-slate-800 font-bold">{item.name}</td>
+                    <td className="py-4 border-b border-slate-50 text-center text-xs font-bold text-slate-400">
                        {item.holdings?.length || 0} Assets
                     </td>
                     <td className="text-right">
@@ -291,42 +298,42 @@ export default function PortfolioPage() {
             </table>
           </section>
 
-          <section className="glass-card overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
-              <h2 className="text-xl font-bold text-white">Current Holdings</h2>
+          <section className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-800">Current Holdings</h2>
               <div className="flex gap-2">
-                 <span className="badge badge-primary">Real-time Stats</span>
+                 <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">Real-time Stats</span>
               </div>
             </div>
-            <table className="modern-table">
+            <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr>
-                  <th>Asset</th>
-                  <th>Position</th>
-                  <th className="text-right">Market Price</th>
-                  <th className="text-right">Valuation</th>
-                  <th className="text-right">Management</th>
+                <tr className="bg-slate-50">
+                  <th className="pl-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Asset</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Position</th>
+                  <th className="py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Market Price</th>
+                  <th className="py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Valuation</th>
+                  <th className="pr-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Management</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredHoldings.map((item) => (
-                  <tr key={item.id} className="group">
-                    <td>
-                       <div className="font-bold text-white mb-0.5">{item.stock_symbol}</div>
-                       <div className="text-[10px] uppercase font-bold text-finance-muted tracking-widest">{item.stock_name || "Unknown Asset"}</div>
+                  <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                    <td className="pl-6 py-4 border-b border-slate-50">
+                       <div className="font-bold text-slate-800 mb-0.5">{item.stock_symbol}</div>
+                       <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">{item.stock_name || "Unknown Asset"}</div>
                     </td>
-                    <td className="text-white font-medium">{item.quantity} Units</td>
-                    <td className="text-right">
-                      <span className="text-finance-muted text-[10px] mr-1">INR</span>
-                      <span className="text-white font-bold">{Number(item.current_price || 0).toLocaleString()}</span>
+                    <td className="py-4 border-b border-slate-50 text-slate-700 font-medium">{item.quantity} Units</td>
+                    <td className="text-right py-4 border-b border-slate-50">
+                      <span className="text-slate-400 text-[10px] mr-1">INR</span>
+                      <span className="text-slate-800 font-bold">{Number(item.current_price || 0).toLocaleString()}</span>
                     </td>
-                    <td className="text-right">
-                       <div className="text-emerald-400 font-black">
+                    <td className="text-right py-4 border-b border-slate-50">
+                       <div className="text-emerald-500 font-black">
                           <span className="text-[10px] mr-1">INR</span>
                           {Number(item.total_value || 0).toLocaleString()}
                        </div>
                     </td>
-                    <td className="text-right">
+                    <td className="pr-6 text-right py-4 border-b border-slate-50">
                       <button 
                         className="px-4 py-1.5 rounded-lg bg-rose-500/10 text-rose-500 text-xs font-bold hover:bg-rose-500 hover:text-white transition-all opacity-0 group-hover:opacity-100" 
                         onClick={() => removeHolding(item.id)}
@@ -338,19 +345,19 @@ export default function PortfolioPage() {
                 ))}
                 {!filteredHoldings.length && (
                   <tr>
-                    <td colSpan={4} className="py-20 text-center text-finance-muted italic">No holdings detected for this selection.</td>
+                    <td colSpan={5} className="py-20 text-center text-slate-400 italic">No holdings detected for this selection.</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </section>
 
-          <section className="glass-card overflow-hidden">
-             <div className="p-8 border-b border-white/5 bg-finance-primary/5">
+          <section className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+             <div className="p-8 border-b border-slate-100 bg-emerald-500/5">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight mb-2">Portfolio Clustering</h2>
-                    <p className="text-finance-muted text-sm">AI-driven KMeans analysis using PE, ROE, and Market Cap.</p>
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2 uppercase">Portfolio Clustering</h2>
+                    <p className="text-slate-500 text-sm">AI-driven KMeans analysis using PE, ROE, and Market Cap.</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="relative group">
@@ -358,47 +365,47 @@ export default function PortfolioPage() {
                         type="number"
                         min="2"
                         max="12"
-                        className="input-field w-24 pl-4 pr-4"
+                        className="w-24 bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-emerald-500 transition-all font-bold"
                         value={clusterCount}
                         onChange={(event) => setClusterCount(event.target.value)}
                         placeholder="N"
                       />
-                      <span className="absolute -top-6 left-0 text-[10px] items-center font-bold text-finance-muted uppercase tracking-widest">Clusters</span>
+                      <span className="absolute -top-6 left-0 text-[10px] items-center font-bold text-slate-400 uppercase tracking-widest">Clusters</span>
                     </div>
-                    <button className="btn-primary whitespace-nowrap" onClick={runClustering}>Execute Analysis</button>
+                    <button className="bg-emerald-500 text-white px-6 py-3.5 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all" onClick={runClustering}>Execute Analysis</button>
                   </div>
                 </div>
              </div>
-            <table className="modern-table">
+            <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr>
-                  <th>Asset Name</th>
-                  <th>AI Cluster</th>
-                  <th>P/E</th>
-                  <th>ROE %</th>
-                  <th className="text-right">Market Cap</th>
+                <tr className="bg-slate-50">
+                  <th className="pl-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Asset Name</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">AI Cluster</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">P/E</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">ROE %</th>
+                  <th className="pr-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Market Cap</th>
                 </tr>
               </thead>
               <tbody>
                 {clusterResults.map((item) => (
-                  <tr key={item.id} className="hover:bg-finance-primary/5 transition-colors">
-                    <td>
-                       <div className="font-bold text-white">{item.stock_name || item.stock_symbol}</div>
-                       <code className="text-[10px] text-finance-primary font-bold">{item.stock_symbol}</code>
+                  <tr key={item.id} className="hover:bg-emerald-50 transition-colors">
+                    <td className="pl-6 py-4 border-b border-slate-50">
+                       <div className="font-bold text-slate-800">{item.stock_name || item.stock_symbol}</div>
+                       <code className="text-[10px] text-emerald-600 font-bold">{item.stock_symbol}</code>
                     </td>
-                    <td>
-                      <span className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-white font-black text-[10px]">
+                    <td className="py-4 border-b border-slate-50">
+                      <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-black text-[10px]">
                         CLUSTER_{item.cluster_label}
                       </span>
                     </td>
-                    <td className="text-white font-medium">{item.feature_vector?.pe?.toFixed(2) || "-"}</td>
-                    <td className="text-white font-medium">{item.feature_vector?.roe?.toFixed(2) || "-"}%</td>
-                    <td className="text-right font-mono text-xs text-finance-muted">{(item.feature_vector?.market_cap / 1e9).toFixed(2)}B</td>
+                    <td className="py-4 border-b border-slate-50 text-slate-800 font-medium">{item.feature_vector?.pe?.toFixed(2) || "-"}</td>
+                    <td className="py-4 border-b border-slate-50 text-slate-800 font-medium">{item.feature_vector?.roe?.toFixed(2) || "-"}%</td>
+                    <td className="pr-6 text-right py-4 border-b border-slate-50 font-mono text-xs text-slate-500">{(item.feature_vector?.market_cap / 1e9).toFixed(2)}B</td>
                   </tr>
                 ))}
                 {!clusterResults.length && (
                   <tr>
-                    <td colSpan={5} className="py-20 text-center text-finance-muted italic">
+                    <td colSpan={5} className="py-20 text-center text-slate-400 italic">
                       Start clustering analysis to categorize your holdings.
                     </td>
                   </tr>

@@ -153,20 +153,20 @@ export default function MLPage() {
   const chartData = getChartData();
 
   return (
-    <main className="app-shell animate-fade-in flex flex-col md:flex-row gap-8">
+    <main className="max-w-[1400px] mx-auto px-6 py-10 animate-fade-in flex flex-col md:flex-row gap-8 bg-white min-h-screen">
       {/* Sidebar for Navigation */}
-      <aside className="w-full md:w-64 glass-card p-4 h-fit shrink-0 space-y-2">
+      <aside className="w-full md:w-64 bg-slate-50 border border-slate-200 rounded-3xl p-4 h-fit shrink-0 space-y-2">
         <div className="flex items-center gap-3 px-4 py-3 mb-4">
-          <span className="badge badge-primary">ML</span>
-          <span className="text-finance-muted text-xs font-mono uppercase tracking-widest">Dashboard</span>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">AI OPS</span>
+          <span className="text-slate-400 text-xs font-mono uppercase tracking-widest">Model Hub</span>
         </div>
         
         <button
           onClick={() => handleTabChange("prediction")}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm tracking-widest uppercase ${
             activeTab === "prediction"
-              ? "bg-finance-primary/20 text-finance-primary border border-finance-primary/30 shadow-lg shadow-finance-primary/10"
-              : "text-finance-muted hover:bg-white/5 hover:text-white"
+              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+              : "text-slate-500 hover:bg-emerald-500/10 hover:text-emerald-600"
           }`}
         >
           <svg className="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -177,8 +177,8 @@ export default function MLPage() {
           onClick={() => handleTabChange("forecasting")}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm tracking-widest uppercase ${
             activeTab === "forecasting"
-              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-500/10"
-              : "text-finance-muted hover:bg-white/5 hover:text-white"
+              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+              : "text-slate-500 hover:bg-emerald-500/10 hover:text-emerald-600"
           }`}
         >
           <svg className="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -186,18 +186,17 @@ export default function MLPage() {
         </button>
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 space-y-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">{currentContent.title}</h1>
-          <p className="text-finance-muted text-xs font-bold uppercase tracking-widest mt-1">{currentContent.subtitle}</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">{currentContent.title}</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">{currentContent.subtitle}</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Controls */}
-          <aside className="glass-card p-6 h-fit space-y-6">
+          <aside className="bg-slate-50 border border-slate-200 rounded-3xl p-6 h-fit shadow-sm space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-finance-muted uppercase tracking-widest">Industry Segment</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Industry Segment</label>
               <select 
                 className="input-field text-sm"
                 value={selectedSector}
@@ -213,7 +212,7 @@ export default function MLPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-finance-muted uppercase tracking-widest">Target Stock</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target Stock</label>
               <select 
                 className="input-field text-sm"
                 value={selectedStock}
@@ -229,7 +228,7 @@ export default function MLPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-finance-muted uppercase tracking-widest">Model Strategy</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Model Strategy</label>
               <select 
                 className="input-field text-sm"
                 value={selectedModel}
@@ -245,7 +244,7 @@ export default function MLPage() {
             </div>
 
             <button 
-              className={`btn-primary w-full py-3 ${activeTab === 'forecasting' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20' : ''}`}
+              className={`w-full py-4 rounded-xl text-white font-bold text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-50 ${activeTab === 'forecasting' ? 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20' : 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'}`}
               onClick={handleRunModel}
               disabled={loading || !selectedStock}
             >
@@ -260,19 +259,19 @@ export default function MLPage() {
             {result && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="glass-card p-6 border-white/5">
-                    <span className="block text-[9px] text-finance-muted uppercase font-bold tracking-widest mb-1">Mean Absolute Error</span>
-                    <span className="text-2xl font-black text-white">{result.metrics.mae?.toFixed(4) || "N/A"}</span>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <span className="block text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-1">Mean Absolute Error</span>
+                    <span className="text-2xl font-black text-slate-800">{result.metrics.mae?.toFixed(4) || "N/A"}</span>
                   </div>
-                  <div className="glass-card p-6 border-white/5">
-                    <span className="block text-[9px] text-finance-muted uppercase font-bold tracking-widest mb-1">Root Mean Square Error</span>
-                    <span className="text-2xl font-black text-white">{result.metrics.rmse?.toFixed(4) || "N/A"}</span>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <span className="block text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-1">Root Mean Square Error</span>
+                    <span className="text-2xl font-black text-slate-800">{result.metrics.rmse?.toFixed(4) || "N/A"}</span>
                   </div>
-                  <div className="glass-card p-6 border-white/5">
-                    <span className="block text-[9px] text-finance-muted uppercase font-bold tracking-widest mb-1">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <span className="block text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-1">
                       {activeTab === "prediction" ? "R-Squared Score" : "Accuracy (R2)"}
                     </span>
-                    <span className={`text-2xl font-black ${activeTab === 'prediction' ? 'text-finance-primary' : 'text-white'}`}>
+                    <span className={`text-2xl font-black ${activeTab === 'prediction' ? 'text-emerald-500' : 'text-slate-800'}`}>
                       {activeTab === "prediction" 
                         ? result.metrics.r2?.toFixed(4) || "N/A"
                         : (result.metrics.r2 * 100)?.toFixed(1) + "%"}
@@ -280,9 +279,9 @@ export default function MLPage() {
                   </div>
                 </div>
 
-                <div className="glass-card p-8 min-h-[400px]">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest mb-8 flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full animate-pulse ${activeTab === 'prediction' ? 'bg-finance-primary' : 'bg-emerald-400'}`}></span>
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 min-h-[400px] shadow-sm">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-8 flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full animate-pulse ${activeTab === 'prediction' ? 'bg-emerald-500' : 'bg-emerald-400'}`}></span>
                     {activeTab === "prediction" ? "Projected Movement:" : "Forecast Projection:"} {selectedStock}
                   </h3>
                   {chartData && (

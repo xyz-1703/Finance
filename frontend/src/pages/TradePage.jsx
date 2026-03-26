@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import api from "../api/client";
 
 export default function TradePage() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthenticated = Boolean(localStorage.getItem("access_token"));
   const [portfolios, setPortfolios] = useState([]);
   const [stocks, setStocks] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -29,30 +31,35 @@ export default function TradePage() {
   const loadData = async (skipError = false) => {
     setLoading(true);
     setError("");
+    
+    // Fetch Stocks individually since it is publicly accessible
     try {
-      const [portfolioResponse, stockResponse, transactionResponse] = await Promise.all([
-        api.get("/portfolio/portfolios/"),
-        api.get("/stocks/stocks/"),
-        api.get("/trading/transactions/"),
-      ]);
-
-      setPortfolios(portfolioResponse.data || []);
-      if (portfolioResponse.data?.length > 0) {
-        setForm(prev => ({ 
-          ...prev, 
-          portfolio_id: prev.portfolio_id || String(portfolioResponse.data[0].id) 
-        }));
-      }
-      setStocks(stockResponse.data || []);
-      setTransactions(transactionResponse.data || []);
-    } catch (err) {
-      if (!skipError) {
-        setMessage("");
-        setError(err.response?.data?.detail || "Unable to load trade resources.");
-      }
-    } finally {
-      setLoading(false);
+      const stockRes = await api.get("/stocks/stocks/");
+      setStocks(stockRes.data || []);
+    } catch(err) {
+      if (!skipError) setError("Unable to load market components.");
     }
+    
+    // Fetch Portfolios & Transactions individually 
+    try {
+      const pRes = await api.get("/portfolio/portfolios/");
+      setPortfolios(pRes.data || []);
+      if (pRes.data?.length > 0) {
+        setForm(prev => ({ ...prev, portfolio_id: prev.portfolio_id || String(pRes.data[0].id) }));
+      }
+    } catch(err) {
+       // Suppress generic 401s for anonymous browsing
+       if (err.response?.status !== 401 && !skipError) setError("Unable to load portfolios.");
+    }
+    
+    try {
+       const tRes = await api.get("/trading/transactions/");
+       setTransactions(tRes.data || []);
+    } catch(err) {
+       // Suppress generic 401
+    }
+    
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -75,6 +82,8 @@ export default function TradePage() {
 
   const openMpinStep = (event) => {
     event.preventDefault();
+    if (!isAuthenticated) return navigate('/login');
+    
     setMessage("");
     setError("");
     setMpin("");
@@ -117,16 +126,16 @@ export default function TradePage() {
   };
 
   return (
-    <main className="app-shell animate-fade-in">
+    <main className="max-w-[1400px] mx-auto px-6 py-10 animate-fade-in bg-white min-h-screen">
       <header className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <span className="badge badge-primary">Trading Desk</span>
-          <span className="text-finance-muted text-xs font-mono uppercase tracking-widest">Execute & Audit</span>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">Trading Desk</span>
+          <span className="text-slate-400 text-xs font-mono uppercase tracking-widest">Execute & Audit</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-white">Market Execution</h1>
-        <p className="text-finance-muted text-lg leading-relaxed max-w-3xl">
+        <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-slate-800">Market Execution</h1>
+        <p className="text-slate-500 text-lg leading-relaxed max-w-3xl">
           Execute precision trades across your portfolios with 
-          <span className="text-finance-primary font-semibold"> MPIN-secured </span> authorization and real-time audit logs.
+          <span className="text-emerald-500 font-semibold"> MPIN-secured </span> authorization and real-time audit logs.
         </p>
       </header>
 
@@ -147,16 +156,16 @@ export default function TradePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Trade Ticket */}
         <div className="lg:col-span-1">
-          <section className="glass-card p-8 bg-white/[0.01] border-white/10 sticky top-8">
-            <h2 className="text-xl font-bold text-white mb-8 flex items-center gap-2">
-              <svg className="h-5 w-5 text-finance-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <section className="bg-white border border-slate-200 rounded-3xl p-8 sticky top-8 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+              <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
               </svg>
               Execution Ticket
             </h2>
             <form className="space-y-6" onSubmit={openMpinStep}>
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-finance-muted uppercase tracking-widest" htmlFor="trade-portfolio">Source Portfolio</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest" htmlFor="trade-portfolio">Source Portfolio</label>
                 <select
                   id="trade-portfolio"
                   className="input-field"
@@ -199,19 +208,18 @@ export default function TradePage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-finance-muted uppercase tracking-widest" htmlFor="trade-quantity">Quantity</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest" htmlFor="trade-quantity">Quantity</label>
                   <input
                     id="trade-quantity"
-                    className="input-field text-white font-bold"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-bold focus:outline-none focus:border-emerald-500 transition-all"
                     value={form.quantity}
                     onChange={(event) => setForm((prev) => ({ ...prev, quantity: event.target.value }))}
                   />
                 </div>
               </div>
 
-
               <div className="pt-4">
-                <button className={`w-full py-4 rounded-2xl font-black uppercase tracking-tighter text-lg transition-all shadow-lg active:scale-95 ${form.side === 'BUY' ? 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-400 shadow-rose-500/20'}`} type="submit">
+                <button className={`w-full py-4 rounded-2xl font-black uppercase tracking-tight text-lg transition-all shadow-lg active:scale-95 text-white ${form.side === 'BUY' ? 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-400 shadow-rose-500/20'}`} type="submit">
                   Continue to Authorization
                 </button>
               </div>
@@ -221,36 +229,36 @@ export default function TradePage() {
 
         {/* Right Column: Transactions */}
         <div className="lg:col-span-2 space-y-8">
-          <section className="glass-card overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
-              <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                 <svg className="h-5 w-5 text-finance-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <section className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                 <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Execution Registry
               </h2>
               <div className="flex items-center gap-2">
-                 <span className="badge badge-primary">Immutable Log</span>
-                 <span className="text-[10px] font-mono text-finance-muted uppercase tracking-widest">{transactions.length} Records</span>
+                 <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">Immutable Log</span>
+                 <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">{transactions.length} Records</span>
               </div>
             </div>
-            <table className="modern-table">
+            <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr>
-                  <th>Reference</th>
-                  <th>Core Asset</th>
-                  <th className="text-center">Action</th>
-                  <th className="text-right">Valuation</th>
-                  <th className="text-right">Timestamp</th>
+                <tr className="bg-slate-50">
+                  <th className="pl-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Reference</th>
+                  <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Core Asset</th>
+                  <th className="py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Action</th>
+                  <th className="py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Valuation</th>
+                  <th className="pr-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Timestamp</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((item) => (
-                  <tr key={item.id} className="group">
-                    <td><code className="bg-white/5 px-2 py-1 rounded text-[10px] font-bold text-finance-primary border border-white/5 uppercase">#TX-{item.id}</code></td>
-                    <td>
-                       <div className="font-bold text-white mb-0.5">{item.stock_symbol || item.stock}</div>
-                       <div className="text-[10px] uppercase font-bold text-finance-muted tracking-widest">{item.portfolio_name || `Portfolio ${item.portfolio}`}</div>
+                  <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                    <td className="pl-6 py-4 border-b border-slate-50 text-xs"><code className="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold text-emerald-600 border border-slate-200 uppercase">#TX-{item.id}</code></td>
+                    <td className="py-4 border-b border-slate-50">
+                       <div className="font-bold text-slate-800 mb-0.5 text-sm">{item.stock_symbol || item.stock}</div>
+                       <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">{item.portfolio_name || `Portfolio ${item.portfolio}`}</div>
                     </td>
                     <td className="text-center">
                       <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest border ${item.side === 'BUY' ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' : 'bg-rose-400/10 text-rose-400 border-rose-400/20'}`}>
@@ -279,16 +287,16 @@ export default function TradePage() {
           </section>
 
           {form.stock_id && (
-            <section className="glass-card p-10 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent border-rose-500/20 animate-fade-in">
+            <section className="bg-white border border-slate-200 rounded-3xl p-10 shadow-sm border-l-4 border-l-rose-500 animate-fade-in">
               <div className="flex items-start gap-6">
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-500">
+                <div className="w-12 h-12 shrink-0 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-rose-400 uppercase tracking-tighter mb-2">High Frequency Risk</h3>
-                  <p className="text-finance-muted leading-relaxed">
+                  <h3 className="text-xl font-black text-rose-500 uppercase tracking-tighter mb-2">High Frequency Risk</h3>
+                  <p className="text-slate-500 leading-relaxed">
                     Trading involves significant financial risk. Ensure you have analyzed the market assets 
                     and sentiment before committing large allocations from your portfolios. 
                     All trades are finalized immediately upon MPIN verification.
@@ -302,27 +310,27 @@ export default function TradePage() {
 
       {mpinOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-xl bg-black/80 animate-fade-in shadow-2xl">
-          <form className="glass-card w-full max-w-md p-10 border-finance-primary/30 shadow-2xl shadow-finance-primary/10 animate-scale-up" onSubmit={submitTrade}>
-             <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-finance-primary/10 flex items-center justify-center text-finance-primary ring-1 ring-finance-primary/30">
+          <form className="bg-white border border-slate-200 rounded-3xl w-full max-w-md p-10 shadow-2xl animate-scale-up" onSubmit={submitTrade}>
+             <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 ring-1 ring-emerald-500/30">
                 <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
              </div>
-            <h3 className="text-3xl font-black text-white text-center mb-2 tracking-tighter">Authorize Trade</h3>
-            <p className="text-finance-muted text-center mb-10 text-sm font-bold uppercase tracking-widest">Global Security Gateway</p>
+            <h3 className="text-3xl font-black text-slate-800 text-center mb-2 tracking-tighter uppercase">Authorize Trade</h3>
+            <p className="text-slate-400 text-center mb-10 text-sm font-bold uppercase tracking-widest">Global Security Gateway</p>
             
             <div className="space-y-6">
-               <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 mb-6 text-center">
-                  <span className="block text-[10px] text-finance-muted uppercase font-bold tracking-widest mb-1">Execution Side</span>
-                  <span className={`text-xl font-black ${form.side === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}`}>{form.side}ING {form.quantity} UNITS</span>
+               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 mb-6 text-center">
+                  <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Execution Side</span>
+                  <span className={`text-xl font-black ${form.side === 'BUY' ? 'text-emerald-500' : 'text-rose-500'}`}>{form.side}ING {form.quantity} UNITS</span>
                </div>
 
                <div>
-                <label className="block text-[10px] font-bold text-finance-muted uppercase tracking-widest mb-2 text-center" htmlFor="mpin-input">Encrypted MPIN</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-center" htmlFor="mpin-input">Encrypted MPIN</label>
                 <input
                   id="mpin-input"
                   type="password"
-                  className="input-field text-center text-3xl tracking-[1.5rem] py-5 font-black text-finance-primary"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl text-center text-3xl tracking-[1.5rem] py-5 font-black text-emerald-500 focus:outline-none focus:border-emerald-500 transition-all"
                   value={mpin}
                   onChange={(event) => setMpin(event.target.value)}
                   placeholder="••••"
@@ -334,11 +342,11 @@ export default function TradePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-10">
-              <button type="submit" className="btn-primary py-4 font-black">Verify & Deploy</button>
-              <button type="button" className="btn-secondary py-4 font-black" onClick={() => setMpinOpen(false)}>Abort Order</button>
+              <button type="submit" className="bg-emerald-500 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all">Verify & Deploy</button>
+              <button type="button" className="bg-slate-100 text-slate-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={() => setMpinOpen(false)}>Abort Order</button>
             </div>
             
-            <p className="mt-8 text-center text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] opacity-40">End-to-end Encrypted Session</p>
+            <p className="mt-8 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em] opacity-80">End-to-end Encrypted Session</p>
           </form>
         </div>
       )}

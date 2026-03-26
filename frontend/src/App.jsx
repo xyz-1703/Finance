@@ -38,16 +38,10 @@ export default function App() {
 
   const location = useLocation();
 
-  const isAuthPage = [
-    "/",
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/verify-otp",
-    "/reset-password",
-  ].includes(location.pathname);
-
   useEffect(() => {
+    // Add light-mode to body by default to support the new Groww aesthetic
+    document.body.classList.add("light-mode");
+    
     const syncAuth = () => {
       setIsAuthenticated(Boolean(localStorage.getItem("access_token")));
     };
@@ -61,8 +55,17 @@ export default function App() {
     };
   }, []);
 
+  const isAuthPage = [
+    "/",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/verify-otp",
+    "/reset-password",
+  ].includes(location.pathname);
+
   return (
-    <div className="app-shell bg-finance-bg min-h-screen text-finance-text">
+    <div className="min-h-screen">
       {!isAuthPage && <TopBar isAuthenticated={isAuthenticated} />}
 
       <Routes>
@@ -77,50 +80,11 @@ export default function App() {
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            <RequireAuth>
-              <DashboardPage />
-            </RequireAuth>
-          }
-        />
-
-        <Route
-          path="/portfolio/:id"
-          element={
-            <RequireAuth>
-              <PortfolioDetailsPage />
-            </RequireAuth>
-          }
-        />
-
-        <Route
-          path="/portfolio"
-          element={
-            <RequireAuth>
-              <PortfolioPage />
-            </RequireAuth>
-          }
-        />
-
-        <Route
-          path="/automated"
-          element={
-            <RequireAuth>
-              <AutomatedPortfolioPage />
-            </RequireAuth>
-          }
-        />
-
-        <Route
-          path="/trade"
-          element={
-            <RequireAuth>
-              <TradePage />
-            </RequireAuth>
-          }
-        />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/portfolio/:id" element={<PortfolioDetailsPage />} />
+        <Route path="/portfolio" element={<PortfolioPage />} />
+        <Route path="/automated" element={<AutomatedPortfolioPage />} />
+        <Route path="/trade" element={<TradePage />} />
 
         <Route
           path="/settings"
@@ -130,14 +94,8 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route
-          path="/ml"
-          element={
-            <RequireAuth>
-              <MLPage />
-            </RequireAuth>
-          }
-        />
+        
+        <Route path="/ml" element={<MLPage />} />
       </Routes>
     </div>
   );
