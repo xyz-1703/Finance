@@ -129,6 +129,7 @@ export default function MarketHomePage() {
               <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">P/E</th>
               <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Discount</th>
               <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Signal</th>
+              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Sentiment</th>
               <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Market</th>
               <th className="text-right pr-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Order Control</th>
             </tr>
@@ -157,9 +158,18 @@ export default function MarketHomePage() {
                      item.analysis === 'Deep Discount' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/5' :
                      item.analysis === 'Value Pick' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
                      item.analysis === 'All Time High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                     'bg-white/5 text-finance-muted border-white/5'
+                     'bg-slate-100 text-slate-400 border-slate-200'
                    }`}>
                      {item.analysis}
+                   </span>
+                </td>
+                <td>
+                   <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${
+                     item.sentiment === 'Bullish' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-sm' :
+                     item.sentiment === 'Bearish' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-sm' :
+                     'bg-slate-100 text-slate-500 border-slate-200 shadow-sm'
+                   }`}>
+                     {item.sentiment}
                    </span>
                 </td>
                 <td>
@@ -181,7 +191,7 @@ export default function MarketHomePage() {
             ))}
             {!filteredStocks.length && !loading ? (
               <tr>
-                <td colSpan={7} className="py-20 text-center text-finance-muted italic">
+                <td colSpan={8} className="py-20 text-center text-slate-400 italic">
                   No stocks found matching your search.
                 </td>
               </tr>

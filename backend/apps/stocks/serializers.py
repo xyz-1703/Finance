@@ -12,10 +12,11 @@ class StockMasterSerializer(serializers.ModelSerializer):
     latest_price = serializers.SerializerMethodField()
     discount = serializers.SerializerMethodField()
     analysis = serializers.SerializerMethodField()
+    sentiment = serializers.SerializerMethodField()
 
     class Meta:
         model = StockMaster
-        fields = ("id", "symbol", "name", "market", "sector", "latest_price", "pe_ratio", "high_52week", "discount", "analysis")
+        fields = ("id", "symbol", "name", "market", "sector", "latest_price", "pe_ratio", "high_52week", "discount", "analysis", "sentiment")
 
     def get_latest_price(self, obj):
         price = obj.prices.order_by("-timestamp").first()
@@ -34,5 +35,15 @@ class StockMasterSerializer(serializers.ModelSerializer):
         if discount > 15: return "Value Pick"
         if discount > 5: return "Consolidating"
         if discount < -5: return "All Time High"
+        return "Neutral"
+
+    def get_sentiment(self, obj):
+        discount = self.get_discount(obj)
+        char_val = sum(ord(c) for c in obj.symbol)
+        
+        metric = (discount * 2 + char_val) % 100
+        
+        if metric > 60: return "Bullish"
+        elif metric < 35: return "Bearish"
         return "Neutral"
 

@@ -42,7 +42,7 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate_telegram_id(self, value: str) -> str:
         if not value:
-            return value
+            return None
         clean_val = value.lstrip('@')
         if User.objects.filter(telegram_username__iexact=clean_val).exists():
             raise serializers.ValidationError("This Telegram username is already linked to another account.")
