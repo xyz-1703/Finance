@@ -17,6 +17,15 @@
   --text-secondary: #8B94A5;
   --text-muted: #59657D;
   --glass-effect: blur(12px) saturate(180%);
+
+  /* Groww Light Theme Variables */
+  --groww-bg: #ffffff;
+  --groww-surface: #f7f9fa;
+  --groww-primary: #00d09c;
+  --groww-primary-hover: #00b889;
+  --groww-text: #44475b;
+  --groww-heading: #1e293b;
+  --groww-border: #e2e8f0;
 }
 
 @layer base {

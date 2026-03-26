@@ -8,6 +8,7 @@ import MarketHomePage from "./pages/market/MarketHomePage";
 import StockInsightsPage from "./pages/market/StockInsightsPage";
 
 import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
@@ -66,7 +67,7 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
 
         <Route path="/market-home" element={<MarketHomePage />} />
         <Route path="/market/:symbol" element={<StockInsightsPage />} />
