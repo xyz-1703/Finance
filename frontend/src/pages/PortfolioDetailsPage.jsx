@@ -8,7 +8,6 @@ export default function PortfolioDetailsPage() {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [addPayload, setAddPayload] = useState({ symbol: "", quantity: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const [clusters, setClusters] = useState([]);
@@ -48,26 +47,6 @@ export default function PortfolioDetailsPage() {
       setError(err.response?.data?.detail || "Clustering analysis failed. Ensure dependencies are installed.");
     } finally {
       setIsClustering(false);
-    }
-  };
-
-  const handleAddStock = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    try {
-      await api.post("/portfolio/transactions/", {
-        portfolio: Number(id),
-        symbol: addPayload.symbol.toUpperCase(),
-        quantity: Number(addPayload.quantity),
-        action: "BUY",
-      });
-      setAddPayload({ symbol: "", quantity: "" });
-      fetchPortfolio();
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to add stock. Check symbol.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -162,33 +141,6 @@ export default function PortfolioDetailsPage() {
                 </div>
               </div>
 
-              <form className="flex flex-wrap md:flex-nowrap gap-3 items-end" onSubmit={handleAddStock}>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-finance-muted uppercase tracking-widest pl-1">Symbol</label>
-                  <input
-                    className="input-field py-2 text-sm w-40"
-                    placeholder="BTCUSDT"
-                    value={addPayload.symbol}
-                    onChange={(e) => setAddPayload({ ...addPayload, symbol: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-finance-muted uppercase tracking-widest pl-1">Quantity</label>
-                  <input
-                    type="number"
-                    step="any"
-                    className="input-field py-2 text-sm w-32"
-                    placeholder="0.00"
-                    value={addPayload.quantity}
-                    onChange={(e) => setAddPayload({ ...addPayload, quantity: e.target.value })}
-                    required
-                  />
-                </div>
-                <button className="btn-secondary py-2 px-6 text-sm h-[38px] font-bold" type="submit" disabled={submitting}>
-                  {submitting ? "Adding..." : "Add Position"}
-                </button>
-              </form>
             </div>
           </div>
 

@@ -16,8 +16,10 @@ def update_stock_prices():
         if price is not None:
             StockPrice.objects.create(
                 stock=stock,
-                symbol=stock.symbol,
-                price=price
+                close=price,
+                open=price,  # Optionally set all to same for instant update
+                high=price,
+                low=price
             )
             count += 1
     return f"Updated {count} stock prices."

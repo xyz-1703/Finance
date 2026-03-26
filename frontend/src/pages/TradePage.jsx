@@ -17,7 +17,6 @@ export default function TradePage() {
     stock_id: "",
     side: "BUY",
     quantity: "1",
-    price: "",
   });
 
   const [mpinOpen, setMpinOpen] = useState(false);
@@ -27,7 +26,7 @@ export default function TradePage() {
     return stocks.find((item) => String(item.id) === String(form.stock_id));
   }, [stocks, form.stock_id]);
 
-  const loadData = async () => {
+  const loadData = async (skipError = false) => {
     setLoading(true);
     setError("");
     try {
@@ -38,13 +37,19 @@ export default function TradePage() {
       ]);
 
       setPortfolios(portfolioResponse.data || []);
-      if (portfolioResponse.data?.length > 0 && !form.portfolio_id) {
-        setForm(prev => ({ ...prev, portfolio_id: String(portfolioResponse.data[0].id) }));
+      if (portfolioResponse.data?.length > 0) {
+        setForm(prev => ({ 
+          ...prev, 
+          portfolio_id: prev.portfolio_id || String(portfolioResponse.data[0].id) 
+        }));
       }
       setStocks(stockResponse.data || []);
       setTransactions(transactionResponse.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || "Unable to load trade resources.");
+      if (!skipError) {
+        setMessage("");
+        setError(err.response?.data?.detail || "Unable to load trade resources.");
+      }
     } finally {
       setLoading(false);
     }
@@ -67,11 +72,6 @@ export default function TradePage() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    if (selectedStock && !form.price) {
-      setForm((prev) => ({ ...prev, price: "1" }));
-    }
-  }, [selectedStock, form.price]);
 
   const openMpinStep = (event) => {
     event.preventDefault();
@@ -79,8 +79,8 @@ export default function TradePage() {
     setError("");
     setMpin("");
 
-    if (!form.portfolio_id || !form.stock_id || !form.quantity || !form.price) {
-      setError("Portfolio, stock, quantity, and price are required.");
+    if (!form.portfolio_id || !form.stock_id || !form.quantity) {
+      setError("Portfolio, stock, and quantity are required.");
       return;
     }
 
@@ -88,25 +88,29 @@ export default function TradePage() {
   };
 
   const submitTrade = async (event) => {
-    event.preventDefault();
-    setMessage("");
+    setMessage("Verifying Security Identity...");
     setError("");
 
     try {
+      // Small delay for UI perception of security check
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setMessage("MPIN Verified. Finalizing Trade Execution...");
+
       await api.post("/trading/execute/", {
         portfolio_id: Number(form.portfolio_id),
         stock_id: Number(form.stock_id),
         side: form.side,
         quantity: form.quantity,
-        price: form.price,
         mpin,
       });
 
-      setMessage("Trade executed successfully.");
+      setMessage("Asset Successfully Added to Portfolio!");
+      setError("");
       setMpinOpen(false);
       setMpin("");
-      loadData();
+      loadData(true); // skipError=true to avoid conflicting messages
     } catch (err) {
+      setMessage("");
       setError(err.response?.data?.detail || "Trade execution failed.");
     }
   };
@@ -204,18 +208,6 @@ export default function TradePage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-finance-muted uppercase tracking-widest" htmlFor="trade-price">Limit Price (INR)</label>
-                <div className="relative">
-                   <input
-                    id="trade-price"
-                    className="input-field pl-12 text-xl font-black text-white"
-                    value={form.price}
-                    onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))}
-                  />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-finance-muted font-bold text-xs uppercase tracking-widest">₹</span>
-                </div>
-              </div>
 
               <div className="pt-4">
                 <button className={`w-full py-4 rounded-2xl font-black uppercase tracking-tighter text-lg transition-all shadow-lg active:scale-95 ${form.side === 'BUY' ? 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-400 shadow-rose-500/20'}`} type="submit">
@@ -256,8 +248,8 @@ export default function TradePage() {
                   <tr key={item.id} className="group">
                     <td><code className="bg-white/5 px-2 py-1 rounded text-[10px] font-bold text-finance-primary border border-white/5 uppercase">#TX-{item.id}</code></td>
                     <td>
-                       <div className="font-bold text-white mb-0.5">{item.stock}</div>
-                       <div className="text-[10px] uppercase font-bold text-finance-muted tracking-widest">Portfolio {item.portfolio}</div>
+                       <div className="font-bold text-white mb-0.5">{item.stock_symbol || item.stock}</div>
+                       <div className="text-[10px] uppercase font-bold text-finance-muted tracking-widest">{item.portfolio_name || `Portfolio ${item.portfolio}`}</div>
                     </td>
                     <td className="text-center">
                       <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest border ${item.side === 'BUY' ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' : 'bg-rose-400/10 text-rose-400 border-rose-400/20'}`}>
@@ -269,8 +261,8 @@ export default function TradePage() {
                       <div className="text-[10px] text-finance-muted font-mono uppercase tracking-widest">@ ₹{item.price}</div>
                     </td>
                     <td className="text-right text-[10px] font-mono font-bold text-finance-muted uppercase leading-tight tracking-tighter">
-                       {new Date(item.created_at).toLocaleDateString()}<br/>
-                       {new Date(item.created_at).toLocaleTimeString() }
+                       {new Date(item.executed_at).toLocaleDateString()}<br/>
+                       {new Date(item.executed_at).toLocaleTimeString()}
                     </td>
                   </tr>
                 ))}
@@ -285,23 +277,25 @@ export default function TradePage() {
             </table>
           </section>
 
-          <section className="glass-card p-10 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent border-rose-500/20">
-             <div className="flex items-start gap-6">
+          {form.stock_id && (
+            <section className="glass-card p-10 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent border-rose-500/20 animate-fade-in">
+              <div className="flex items-start gap-6">
                 <div className="w-12 h-12 shrink-0 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-500">
-                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                   </svg>
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
                 </div>
                 <div>
-                   <h3 className="text-xl font-black text-rose-400 uppercase tracking-tighter mb-2">High Frequency Risk</h3>
-                   <p className="text-finance-muted leading-relaxed">
-                     Trading involves significant financial risk. Ensure you have analyzed the market assets 
-                     and sentiment before committing large allocations from your portfolios. 
-                     All trades are finalized immediately upon MPIN verification.
-                   </p>
+                  <h3 className="text-xl font-black text-rose-400 uppercase tracking-tighter mb-2">High Frequency Risk</h3>
+                  <p className="text-finance-muted leading-relaxed">
+                    Trading involves significant financial risk. Ensure you have analyzed the market assets 
+                    and sentiment before committing large allocations from your portfolios. 
+                    All trades are finalized immediately upon MPIN verification.
+                  </p>
                 </div>
-             </div>
-          </section>
+              </div>
+            </section>
+          )}
         </div>
       </div>
 

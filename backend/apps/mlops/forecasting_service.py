@@ -46,14 +46,34 @@ def get_real_forecasting(ticker, model_type='linear'):
         # 2. Prepare data for modeling
         # Sort by timestamp ascending for modeling
         data = data.sort_values('timestamp')
-        prices = data['close'].values
+        # CRITICAL: Convert Decimal to float for scikit-learn/numpy compatibility
+        prices = data['close'].astype(float).values
         dates = data['timestamp'].tolist()
         
         # 3. Modeling
-        with mlflow.start_run(run_name=f"Forecast_{ticker}_{model_type}"):
-            mlflow.log_param("ticker", ticker)
-            mlflow.log_param("model_type", model_type)
-            
+        try:
+            with mlflow.start_run(run_name=f"Forecast_{ticker}_{model_type}"):
+                mlflow.log_param("ticker", ticker)
+                mlflow.log_param("model_type", model_type)
+                
+                if model_type == 'linear':
+                    result = run_linear_regression(prices, dates)
+                elif model_type == 'logistic':
+                    result = run_logistic_regression(prices, dates)
+                elif model_type == 'arima':
+                    result = run_arima_model(prices, dates)
+                elif model_type == 'lstm':
+                    result = run_lstm_model(prices, dates)
+                else:
+                    raise ValueError(f"Unsupported model type: {model_type}")
+                
+                # Log metrics to MLflow
+                if 'metrics' in result:
+                    for k, v in result['metrics'].items():
+                        mlflow.log_metric(k, v)
+        except Exception as ml_err:
+            print(f"MLflow Error (Continuing without logging): {ml_err}")
+            # Fallback to direct model execution if MLflow fails
             if model_type == 'linear':
                 result = run_linear_regression(prices, dates)
             elif model_type == 'logistic':
@@ -64,11 +84,6 @@ def get_real_forecasting(ticker, model_type='linear'):
                 result = run_lstm_model(prices, dates)
             else:
                 raise ValueError(f"Unsupported model type: {model_type}")
-            
-            # Log metrics to MLflow
-            if 'metrics' in result:
-                for k, v in result['metrics'].items():
-                    mlflow.log_metric(k, v)
         
         return result
 
@@ -165,8 +180,8 @@ def run_linear_regression(prices, dates):
     return {
         'historical_dates': [d.isoformat() for d in dates],
         'historical_prices': prices.tolist(),
-        'forecast_dates': future_dates,
-        'forecast_prices': future_preds_with_noise.tolist(),
+        'prediction_dates': future_dates,
+        'prediction_prices': future_preds_with_noise.tolist(),
         'metrics': {
             'mae': float(mae),
             'rmse': float(rmse),
@@ -265,8 +280,8 @@ def run_arima_model(prices, dates):
         return {
             'historical_dates': [d.isoformat() for d in dates],
             'historical_prices': prices.tolist(),
-            'forecast_dates': future_dates,
-            'forecast_prices': forecast.tolist(),
+            'prediction_dates': future_dates,
+            'prediction_prices': forecast.tolist(),
             'metrics': {'mae': float(mae), 'rmse': float(rmse), 'r2': float(r2)}
         }
     except Exception as e:
@@ -348,11 +363,7 @@ def get_mock_data(ticker, model_type, error_msg=None):
         'error': error_msg
     }
     
-    if model_type == 'linear':
-        result['forecast_dates'] = future_dates
-        result['forecast_prices'] = future_prices
-    else:
-        result['prediction_dates'] = future_dates
-        result['prediction_prices'] = future_prices
+    result['prediction_dates'] = future_dates
+    result['prediction_prices'] = future_prices
         
     return result

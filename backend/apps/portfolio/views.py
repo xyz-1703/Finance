@@ -15,7 +15,12 @@ class PortfolioViewSet(viewsets.ModelViewSet):
         return Portfolio.objects.filter(user=self.request.user).prefetch_related("holdings")
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        from django.db import IntegrityError
+        from rest_framework.exceptions import ValidationError
+        try:
+            serializer.save(user=self.request.user)
+        except IntegrityError:
+            raise ValidationError({"name": "A portfolio with this name already exists."})
 
     @action(detail=True, methods=["post"])
     def rebalance(self, request, pk=None):
@@ -54,7 +59,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
         portfolio_id = request.data.get('portfolio')
         symbol_identifier = request.data.get('symbol') # Can be ID or ticker string
         action = request.data.get('action', 'BUY')
-        quantity = float(request.data.get('quantity', 0))
+        from decimal import Decimal
+        quantity = Decimal(str(request.data.get('quantity', 0)))
 
         try:
             portfolio = Portfolio.objects.get(id=portfolio_id, user=request.user)

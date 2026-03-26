@@ -7,6 +7,7 @@ import os
 import statistics
 import time
 
+import csv
 import requests
 import yfinance as yf
 from yfinance.exceptions import YFRateLimitError
@@ -85,6 +86,7 @@ BINANCE_BASE_URL = os.getenv("BINANCE_BASE_URL", "https://api.binance.com")
 NSE_BASE_URL = os.getenv("NSE_BASE_URL", "https://www.nseindia.com")
 _nse_session: requests.Session | None = None
 _nse_session_warm_ts: float = 0.0
+FALLBACK_CSV_PATH = os.path.join(os.getcwd(), "market_data_fallback.csv")
 
 yf.utils.get_yf_logger().setLevel(logging.CRITICAL)
 
@@ -162,6 +164,67 @@ def _fetch_nse_quote_snapshot(nse_symbol: str) -> dict | None:
         }
     except Exception:
         return None
+
+
+def _load_from_csv_fallback(symbols: list[str]) -> dict:
+    """Read stock prices from a local CSV file as a emergency fallback."""
+    prices = {}
+    if not os.path.exists(FALLBACK_CSV_PATH):
+        return prices
+
+    try:
+        with open(FALLBACK_CSV_PATH, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                sym = row.get("symbol", "").strip().upper()
+                if sym in symbols:
+                    prices[sym] = {
+                        "market_price": _to_float(row.get("market_price"), 0.0),
+                        "previous_close": _to_float(row.get("previous_close"), 0.0),
+                        "volume": int(_to_float(row.get("volume"), 0.0)),
+                    }
+    except Exception as e:
+        print(f"CSV Read Error: {e}")
+    return prices
+
+
+def _save_to_csv_fallback(prices: dict) -> None:
+    """Save latest successful fetches to a local CSV file for future fallback."""
+    if not prices:
+        return
+
+    # Load existing data to merge
+    existing = {}
+    if os.path.exists(FALLBACK_CSV_PATH):
+        try:
+            with open(FALLBACK_CSV_PATH, mode="r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    sym = row.get("symbol", "").strip().upper()
+                    if sym:
+                        existing[sym] = row
+        except Exception:
+            pass
+
+    # Update with new data
+    for sym, data in prices.items():
+        existing[sym] = {
+            "symbol": sym,
+            "market_price": data.get("market_price"),
+            "previous_close": data.get("previous_close"),
+            "volume": data.get("volume"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    try:
+        with open(FALLBACK_CSV_PATH, mode="w", encoding="utf-8", newline="") as f:
+            fieldnames = ["symbol", "market_price", "previous_close", "volume", "updated_at"]
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for sym in sorted(existing.keys()):
+                writer.writerow(existing[sym])
+    except Exception as e:
+        print(f"CSV Write Error: {e}")
 
 
 def _fetch_nse_historical_points(nse_symbol: str, limit: int = 120) -> list[dict]:
@@ -484,6 +547,18 @@ def _download_snapshots(symbols: list[str]) -> dict:
             snapshot = _fetch_nse_quote_snapshot(symbol)
             if snapshot:
                 prices[symbol] = snapshot
+
+    # Final CSV Fallback for any remaining missing symbols
+    missing_symbols = [s for s in symbols if s not in prices or _to_float(prices[s].get("market_price"), 0.0) <= 0]
+    if missing_symbols:
+        csv_prices = _load_from_csv_fallback(missing_symbols)
+        for sym, data in csv_prices.items():
+            if data.get("market_price", 0) > 0:
+                prices[sym] = data
+
+    # Update CSV fallback with whatever we successfully fetched this time
+    if prices:
+        _save_to_csv_fallback(prices)
 
     return prices
 

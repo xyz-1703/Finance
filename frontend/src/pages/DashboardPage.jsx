@@ -12,6 +12,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showMpinModal, setShowMpinModal] = useState(false);
+  const [mpinValue, setMpinValue] = useState("");
+  const [mpinLoading, setMpinLoading] = useState(false);
+  const [isCreatingPortfolio, setIsCreatingPortfolio] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -62,18 +66,33 @@ export default function DashboardPage() {
   const handleCreatePortfolio = async (e) => {
     e.preventDefault();
     if (!newPortfolioName.trim()) return;
+    
+    setIsCreatingPortfolio(true);
+    setError("");
+    setSuccessMessage("");
+    
     try {
       await api.post("/portfolio/portfolios/", { name: newPortfolioName.trim() });
+      setSuccessMessage(`Portfolio "${newPortfolioName.trim()}" created successfully.`);
       setNewPortfolioName("");
       // Refresh portfolios
       const res = await api.get("/portfolio/portfolios/");
       setPortfolios(res.data);
+      setTimeout(() => setSuccessMessage(""), 5000);
     } catch (err) {
       console.error("Portfolio creation error:", err);
-      const msg = err.response?.data?.error || 
-                 err.response?.data?.detail || 
-                 (err.response?.data ? JSON.stringify(err.response.data) : "Failed to create portfolio.");
+      let msg = "Failed to initialize portfolio.";
+      if (err.response?.data) {
+        const data = err.response.data;
+        if (typeof data === 'string') msg = data;
+        else if (data.detail) msg = data.detail;
+        else if (data.error) msg = data.error;
+        else if (data.name) msg = `Name Error: ${Array.isArray(data.name) ? data.name[0] : data.name}`;
+        else msg = JSON.stringify(data);
+      }
       setError(msg);
+    } finally {
+      setIsCreatingPortfolio(false);
     }
   };
 
@@ -98,6 +117,30 @@ export default function DashboardPage() {
       setTimeout(() => setSuccessMessage(""), 5000);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to execute quick buy.");
+    }
+  };
+
+  const handleSetMpin = async (e) => {
+    e.preventDefault();
+    if (mpinValue.length < 4) {
+      setError("MPIN must be 4-6 digits.");
+      return;
+    }
+    setMpinLoading(true);
+    setError("");
+    try {
+      await api.post("/auth/mpin/set/", { mpin: mpinValue });
+      setSuccessMessage("MPIN configured successfully.");
+      setMpinValue("");
+      setShowMpinModal(false);
+      // Refresh profile
+      const res = await api.get("/auth/profile/");
+      setProfile(res.data);
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to set MPIN.");
+    } finally {
+      setMpinLoading(false);
     }
   };
 
@@ -203,8 +246,16 @@ export default function DashboardPage() {
                     onChange={(e) => setNewPortfolioName(e.target.value)}
                     required
                   />
-                  <button type="submit" className="w-12 h-12 rounded-xl bg-finance-primary hover:scale-105 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-finance-primary/20">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                  <button 
+                    type="submit" 
+                    disabled={isCreatingPortfolio || !newPortfolioName.trim()}
+                    className="w-12 h-12 rounded-xl bg-finance-primary hover:scale-105 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-finance-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingPortfolio ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                    )}
                   </button>
                 </form>
               </div>
@@ -288,9 +339,19 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
                   <div>
                     <span className="block text-[8px] text-finance-muted uppercase font-bold tracking-[0.2em] mb-1">MPIN Guard</span>
-                    <span className={`font-black uppercase text-[10px] ${profile.has_mpin ? 'text-emerald-400' : 'text-finance-muted'}`}>
-                      {profile.has_mpin ? "Active" : "Disabled"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-black uppercase text-[10px] ${profile.has_mpin ? 'text-emerald-400' : 'text-finance-muted'}`}>
+                        {profile.has_mpin ? "Active" : "Disabled"}
+                      </span>
+                      {!profile.has_mpin && (
+                        <button 
+                          onClick={() => setShowMpinModal(true)} 
+                          className="text-[8px] text-finance-primary hover:text-white transition-colors font-bold uppercase tracking-[0.1em]"
+                        >
+                          [Configure]
+                        </button>
+                      )}
+                    </div>
                   </div>
                    <div className={`w-6 h-6 rounded-md flex items-center justify-center ${profile.has_mpin ? 'bg-finance-primary/20 text-finance-primary' : 'bg-white/5 text-finance-muted'}`}>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
@@ -324,6 +385,59 @@ export default function DashboardPage() {
           </section>
         </div>
       </div>
+      
+      {/* MPIN Setup Modal */}
+      {showMpinModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-black/80 animate-fade-in shadow-2xl">
+          <div className="glass-card w-full max-w-sm p-10 border-finance-primary/30 shadow-2xl shadow-finance-primary/10 animate-scale-up relative">
+             <button 
+               onClick={() => setShowMpinModal(false)}
+               className="absolute top-6 right-6 text-finance-muted hover:text-white transition-colors"
+             >
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+               </svg>
+             </button>
+
+             <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-finance-primary/10 flex items-center justify-center text-finance-primary ring-1 ring-finance-primary/30">
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+             </div>
+            <h3 className="text-3xl font-black text-white text-center mb-2 tracking-tighter uppercase">Set Your MPIN</h3>
+            <p className="text-finance-muted text-center mb-10 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+              Create a secure 6-digit pin to authorize <br/> transactions and safeguard your assets.
+            </p>
+            
+            <form onSubmit={handleSetMpin} className="space-y-6">
+               <div>
+                <label className="block text-[10px] font-bold text-finance-muted uppercase tracking-widest mb-3 text-center" htmlFor="new-mpin">Numeric Security Code</label>
+                <input
+                  id="new-mpin"
+                  type="password"
+                  className="input-field text-center text-3xl tracking-[1.5rem] py-5 font-black text-finance-primary border-finance-primary/20 focus:border-finance-primary"
+                  value={mpinValue}
+                  onChange={(e) => setMpinValue(e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••"
+                  maxLength={6}
+                  required
+                  autoFocus
+                />
+               </div>
+
+               <button 
+                 type="submit" 
+                 disabled={mpinLoading || mpinValue.length < 4}
+                 className="btn-primary w-full py-4 font-black uppercase tracking-widest shadow-xl shadow-finance-primary/20 disabled:hidden"
+               >
+                 {mpinLoading ? "Securing..." : "Configure Guard"}
+               </button>
+            </form>
+            
+            <p className="mt-8 text-center text-[9px] font-bold text-finance-muted uppercase tracking-[0.2em] opacity-30">AES-256 Encrypted Storage</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

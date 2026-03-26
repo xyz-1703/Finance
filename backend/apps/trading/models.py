@@ -10,8 +10,8 @@ class Transaction(models.Model):
     SELL = "SELL"
     SIDE_CHOICES = ((BUY, "Buy"), (SELL, "Sell"))
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions")
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="transactions")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="trading_transactions")
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="trading_transactions")
     stock = models.ForeignKey(StockMaster, on_delete=models.CASCADE, related_name="transactions")
 
     side = models.CharField(max_length=4, choices=SIDE_CHOICES)
