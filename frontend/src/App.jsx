@@ -19,8 +19,7 @@ import AutomatedPortfolioPage from "./pages/AutomatedPortfolioPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import SettingsPage from "./pages/SettingsPage";
 import TradePage from "./pages/TradePage";
-import PredictionPage from "./pages/PredictionPage";
-import ForecastingPage from "./pages/ForecastingPage";
+import MLPage from "./pages/MLPage";
 
 
 function RequireAuth({ children }) {
@@ -131,18 +130,10 @@ export default function App() {
           }
         />
         <Route
-          path="/prediction"
+          path="/ml"
           element={
             <RequireAuth>
-              <PredictionPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/forecasting"
-          element={
-            <RequireAuth>
-              <ForecastingPage />
+              <MLPage />
             </RequireAuth>
           }
         />

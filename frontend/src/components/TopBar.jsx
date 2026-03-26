@@ -32,8 +32,7 @@ export default function TopBar({ isAuthenticated }) {
         {isAuthenticated ? <Link to="/dashboard" className="nav-link">Dashboard</Link> : null}
         {isAuthenticated ? <Link to="/portfolio" className="nav-link">Portfolio</Link> : null}
         {isAuthenticated ? <Link to="/trade" className="nav-link">Trade</Link> : null}
-        {isAuthenticated ? <Link to="/prediction" className="nav-link text-finance-primary/80">Prediction</Link> : null}
-        {isAuthenticated ? <Link to="/forecasting" className="nav-link text-finance-primary/80">Forecasting</Link> : null}
+        {isAuthenticated ? <Link to="/ml" className="nav-link text-finance-primary/80">ML</Link> : null}
         {isAuthenticated ? <Link to="/settings" className="nav-link">Settings</Link> : null}
         {!isAuthenticated ? <Link to="/login" className="nav-link">Login</Link> : null}
         {!isAuthenticated ? <Link to="/register" className="nav-link">Register</Link> : null}

@@ -104,7 +104,8 @@ export default function TradePage() {
         mpin,
       });
 
-      setMessage("Asset Successfully Added to Portfolio!");
+      const selectedPortfolio = portfolios.find(p => String(p.id) === String(form.portfolio_id));
+      setMessage(`Asset Successfully Added to "${selectedPortfolio?.name}"!`);
       setError("");
       setMpinOpen(false);
       setMpin("");

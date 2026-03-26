@@ -212,9 +212,10 @@ export default function DashboardPage() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4 relative z-10">
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                      <span className="block text-[9px] text-finance-muted uppercase font-bold tracking-widest mb-1">Holdings</span>
-                      <span className="text-xl font-black text-white">{portfolio.holdings?.length || 0}</span>
+                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                      <span className="block text-[9px] font-bold text-finance-muted uppercase tracking-widest mb-2">Unique Assets</span>
+                      <p className="text-xl md:text-2xl font-black text-white tracking-tighter mb-1 mt-auto">{portfolio.holdings.length}</p>
+                      <p className="text-[10px] text-finance-muted mt-1 font-bold">{portfolio.total_quantity} Unit{portfolio.total_quantity !== 1 ? 's' : ''} Owned</p>
                     </div>
                     <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
                       <span className="block text-[9px] text-finance-muted uppercase font-bold tracking-widest mb-1">Valuation</span>
