@@ -21,6 +21,8 @@ import PortfolioPage from "./pages/PortfolioPage";
 import SettingsPage from "./pages/SettingsPage";
 import TradePage from "./pages/TradePage";
 import MLPage from "./pages/MLPage";
+import RecommendationsPage from "./pages/RecommendationsPage";
+import Chatbot from "./components/Chatbot";
 
 
 function RequireAuth({ children }) {
@@ -39,9 +41,6 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    // Add light-mode to body by default to support the new Groww aesthetic
-    document.body.classList.add("light-mode");
-    
     const syncAuth = () => {
       setIsAuthenticated(Boolean(localStorage.getItem("access_token")));
     };
@@ -96,7 +95,9 @@ export default function App() {
         />
         
         <Route path="/ml" element={<MLPage />} />
+        <Route path="/recommendations" element={<RecommendationsPage />} />
       </Routes>
+      <Chatbot />
     </div>
   );
 }

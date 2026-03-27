@@ -58,6 +58,8 @@ kombu==5.6.2
 Mako==1.3.10
 MarkupSafe==3.0.3
 matplotlib==3.10.8
+langchain
+langgraph
 mlflow==2.19.0
 mlflow-skinny==3.10.1
 mlflow-tracing==3.10.1
@@ -111,6 +113,7 @@ starlette==1.0.0
 statsmodels==0.14.4
 threadpoolctl==3.6.0
 transformers==4.48.2
+openai
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzdata==2025.3

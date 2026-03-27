@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/admin/", include("apps.admin_api.urls")),
     path("api/forecast/", forecast_view, name="api-forecast"),
     path("api/prediction/", prediction_view, name="api-prediction"),
+    path("api/chat/", include("apps.chatbot.urls")),
 ]
