@@ -5,15 +5,19 @@ from apps.stocks.models import StockMaster
 
 
 class Portfolio(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="portfolios")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="portfolios", null=True, blank=True)
     name = models.CharField(max_length=120)
+    description = models.TextField(blank=True, null=True)
     sector = models.CharField(max_length=100, blank=True, null=True)
     is_automated = models.BooleanField(default=False)
+    is_default = models.BooleanField(default=False, help_text="Global template portfolio visible to all users")
     target_allocation = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("user", "name")
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'name'], condition=models.Q(user__isnull=False), name='unique_user_portfolio_name'),
+        ]
 
     def __str__(self) -> str:
         return f"{self.user.email} - {self.name}"

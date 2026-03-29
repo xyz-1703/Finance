@@ -1,102 +1,73 @@
-import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import Chatbot from './components/common/Chatbot';
 
-import TopBar from "./components/TopBar";
-import DashboardPage from "./pages/DashboardPage";
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import PortfolioPage from './pages/PortfolioPage';
+import PortfolioDetailPage from './pages/PortfolioDetailPage';
+import StockDetailPage from './pages/StockDetailPage';
+import AnalysisPage from './pages/AnalysisPage';
+import QualityPage from './pages/QualityPage';
+import SettingsPage from './pages/SettingsPage';
 
-import MarketHomePage from "./pages/market/MarketHomePage";
-import StockInsightsPage from "./pages/market/StockInsightsPage";
-
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import VerifyOtpPage from "./pages/VerifyOtpPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-
-import PortfolioDetailsPage from "./pages/PortfolioDetailsPage";
-import AutomatedPortfolioPage from "./pages/AutomatedPortfolioPage";
-
-import PortfolioPage from "./pages/PortfolioPage";
-import SettingsPage from "./pages/SettingsPage";
-import TradePage from "./pages/TradePage";
-import MLPage from "./pages/MLPage";
-
-
-function RequireAuth({ children }) {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-}
-
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    Boolean(localStorage.getItem("access_token"))
-  );
-
-  const location = useLocation();
-
-  useEffect(() => {
-    // Add light-mode to body by default to support the new Groww aesthetic
-    document.body.classList.add("light-mode");
-    
-    const syncAuth = () => {
-      setIsAuthenticated(Boolean(localStorage.getItem("access_token")));
-    };
-
-    window.addEventListener("storage", syncAuth);
-    window.addEventListener("auth-changed", syncAuth);
-
-    return () => {
-      window.removeEventListener("storage", syncAuth);
-      window.removeEventListener("auth-changed", syncAuth);
-    };
-  }, []);
-
-  const isAuthPage = [
-    "/",
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/verify-otp",
-    "/reset-password",
-  ].includes(location.pathname);
-
+const App = () => {
   return (
-    <div className="min-h-screen">
-      {!isAuthPage && <TopBar isAuthenticated={isAuthenticated} />}
-
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-
-        <Route path="/market-home" element={<MarketHomePage />} />
-        <Route path="/market/:symbol" element={<StockInsightsPage />} />
-
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/verify-otp" element={<VerifyOtpPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/portfolio/:id" element={<PortfolioDetailsPage />} />
-        <Route path="/portfolio" element={<PortfolioPage />} />
-        <Route path="/automated" element={<AutomatedPortfolioPage />} />
-        <Route path="/trade" element={<TradePage />} />
-
-        <Route
-          path="/settings"
-          element={
-            <RequireAuth>
-              <SettingsPage />
-            </RequireAuth>
-          }
-        />
-        
-        <Route path="/ml" element={<MLPage />} />
-      </Routes>
-    </div>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-main-bg text-main-text flex flex-col font-sans transition-colors duration-300">
+            <Navbar />
+            <main className="flex-grow w-full">
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/stock/:symbol" element={<StockDetailPage />} />
+                <Route path="/analysis" element={<AnalysisPage />} />
+                <Route path="/quality" element={<QualityPage />} />
+                
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/portfolios" element={
+                  <ProtectedRoute>
+                    <PortfolioPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/portfolios/:id" element={
+                  <ProtectedRoute>
+                    <PortfolioDetailPage />
+                  </ProtectedRoute>
+                } />
+              </Routes>
+            </main>
+            
+            <Chatbot />
+            <Footer />
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
-}
+};
+
+export default App;

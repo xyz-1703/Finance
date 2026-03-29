@@ -2,9 +2,36 @@ from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction, models
+from decimal import Decimal
 from .models import Portfolio, Holding, Transaction
 from .serializers import PortfolioSerializer, HoldingSerializer, TransactionSerializer
 from apps.stocks.models import StockMaster, StockPrice
+
+
+def seed_portfolio_holdings(portfolio):
+    if Holding.objects.filter(portfolio=portfolio).exists():
+        return
+    stocks = StockMaster.objects.filter(prices__isnull=False).distinct().order_by("symbol")[:4]
+    if not stocks:
+        return
+    for stock in stocks:
+        price_obj = StockPrice.objects.filter(stock=stock).order_by("-timestamp").first()
+        if not price_obj:
+            continue
+        qty = Decimal("5")
+        Holding.objects.create(
+            portfolio=portfolio,
+            stock=stock,
+            quantity=qty,
+            average_buy_price=price_obj.close,
+        )
+        Transaction.objects.create(
+            portfolio=portfolio,
+            symbol=stock,
+            action="BUY",
+            quantity=qty,
+            price=price_obj.close,
+        )
 
 
 class PortfolioViewSet(viewsets.ModelViewSet):
@@ -12,15 +39,48 @@ class PortfolioViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Portfolio.objects.filter(user=self.request.user).prefetch_related("holdings")
+        # Show user's portfolios + default/template portfolios for all users
+        from django.db.models import Q
+        return Portfolio.objects.filter(
+            Q(user=self.request.user) | Q(is_default=True)
+        ).prefetch_related("holdings").order_by("-is_default", "-created_at")
 
     def perform_create(self, serializer):
         from django.db import IntegrityError
         from rest_framework.exceptions import ValidationError
         try:
-            serializer.save(user=self.request.user)
+            portfolio = serializer.save(user=self.request.user)
+            seed_portfolio_holdings(portfolio)
         except IntegrityError:
             raise ValidationError({"name": "A portfolio with this name already exists."})
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        for portfolio in queryset:
+            seed_portfolio_holdings(portfolio)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        seed_portfolio_holdings(instance)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        """Only allow users to update their own portfolios"""
+        portfolio = self.get_object()
+        if portfolio.user != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only update your own portfolios.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Only allow users to delete their own portfolios"""
+        if instance.user != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only delete your own portfolios.")
+        instance.delete()
 
     @action(detail=True, methods=["post"])
     def rebalance(self, request, pk=None):
@@ -38,6 +98,24 @@ class PortfolioViewSet(viewsets.ModelViewSet):
         stocks = suggest_diversified_portfolio(request.user)
         return Response(StockMasterSerializer(stocks, many=True).data)
 
+    @action(detail=True, methods=["get"])
+    def recommendations(self, request, pk=None):
+        from apps.stocks.serializers import StockMasterSerializer
+        portfolio = self.get_object()
+        holding_symbols = list(portfolio.holdings.values_list("stock__symbol", flat=True))
+        qs = StockMaster.objects.exclude(symbol__in=holding_symbols).order_by("symbol")
+        if portfolio.sector:
+            sector_qs = qs.filter(sector__icontains=portfolio.sector)
+            if sector_qs.exists():
+                qs = sector_qs
+        stocks = list(qs[:5])
+        if len(stocks) < 5:
+            extra = StockMaster.objects.exclude(symbol__in=holding_symbols).exclude(
+                id__in=[s.id for s in stocks]
+            ).order_by("symbol")[: 5 - len(stocks)]
+            stocks.extend(list(extra))
+        return Response(StockMasterSerializer(stocks, many=True).data)
+
     @action(detail=False, methods=["post"])
     def sell(self, request):
         # A convenience wrapper for selling stock
@@ -52,7 +130,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Transaction.objects.filter(portfolio__user=self.request.user).select_related("portfolio", "symbol")
+        from django.db.models import Q
+        return Transaction.objects.filter(
+            Q(portfolio__user=self.request.user) | Q(portfolio__is_default=True)
+        ).select_related("portfolio", "symbol")
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -63,7 +144,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
         quantity = Decimal(str(request.data.get('quantity', 0)))
 
         try:
-            portfolio = Portfolio.objects.get(id=portfolio_id, user=request.user)
+            portfolio = Portfolio.objects.filter(id=portfolio_id, user=request.user).first()
+            if portfolio is None:
+                portfolio = Portfolio.objects.filter(id=portfolio_id, is_default=True).first()
+            if portfolio is None:
+                raise Portfolio.DoesNotExist()
             
             # Flexible stock lookup
             if isinstance(symbol_identifier, int) or (isinstance(symbol_identifier, str) and symbol_identifier.isdigit()):
@@ -119,5 +204,9 @@ class HoldingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Holding.objects.filter(portfolio__user=self.request.user).select_related("portfolio", "stock")
+        # Allow viewing holdings from user's portfolios and default/template portfolios
+        from django.db.models import Q
+        return Holding.objects.filter(
+            Q(portfolio__user=self.request.user) | Q(portfolio__is_default=True)
+        ).select_related("portfolio", "stock")
 

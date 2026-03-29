@@ -12,6 +12,9 @@ export default function PortfolioDetailsPage() {
 
   const [clusters, setClusters] = useState([]);
   const [isClustering, setIsClustering] = useState(false);
+  const [addSymbol, setAddSymbol] = useState('');
+  const [addQuantity, setAddQuantity] = useState('1');
+  const [addingAsset, setAddingAsset] = useState(false);
 
   useEffect(() => {
     fetchPortfolio();
@@ -22,9 +25,31 @@ export default function PortfolioDetailsPage() {
       const res = await api.get(`/portfolio/portfolios/${id}/`);
       setPortfolio(res.data);
       setLoading(false);
+      
+      // Auto-run clustering if portfolio has 2+ stocks
+      if (res.data.holdings && res.data.holdings.length >= 2) {
+        performClustering(res.data.holdings);
+      }
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.detail || "Failed to load portfolio details.");
       setLoading(false);
+    }
+  };
+
+  const performClustering = async (holdings) => {
+    try {
+      setIsClustering(true);
+      const symbols = [...new Set(holdings.map(h => h.symbol))];
+      const res = await api.post("/mlops/cluster/run/", {
+        symbols,
+        n_clusters: Math.min(3, symbols.length)
+      });
+      setClusters(res.data);
+    } catch (err) {
+      console.error("Clustering failed:", err);
+      // Don't show error for clustering - it's optional
+    } finally {
+      setIsClustering(false);
     }
   };
 
@@ -34,20 +59,7 @@ export default function PortfolioDetailsPage() {
       return;
     }
     
-    setIsClustering(true);
-    setError("");
-    try {
-      const symbols = [...new Set(portfolio.holdings.map(h => h.symbol))];
-      const res = await api.post("/mlops/cluster/run/", {
-        symbols,
-        n_clusters: Math.min(3, symbols.length)
-      });
-      setClusters(res.data);
-    } catch (err) {
-      setError(err.response?.data?.detail || "Clustering analysis failed. Ensure dependencies are installed.");
-    } finally {
-      setIsClustering(false);
-    }
+    await performClustering(portfolio.holdings);
   };
 
   const handleSell = async (symbol, currentQty) => {
@@ -92,6 +104,7 @@ export default function PortfolioDetailsPage() {
             </button>
             <div className="flex items-center gap-3 mb-2">
               <span className="badge badge-primary">Portfolio Detail</span>
+              {portfolio.is_default && <span className="badge bg-accent-gold/10 text-accent-gold text-[8px]">TEMPLATE</span>}
               <span className="text-finance-muted text-[10px] font-mono uppercase tracking-widest">ID: {id}</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white">{portfolio.name}</h1>
@@ -130,18 +143,64 @@ export default function PortfolioDetailsPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
               <div>
                 <h2 className="text-2xl font-black text-white tracking-tight mb-2">Current Asset Allocation</h2>
-                <div className="flex items-center gap-4">
-                  <button 
-                    className="btn-primary py-2 px-6 text-xs h-auto" 
-                    onClick={handleRunClustering} 
-                    disabled={isClustering || portfolio.holdings.length < 2}
-                  >
-                    {isClustering ? "Clustering..." : "Run AI Cluster Analysis"}
-                  </button>
-                </div>
+                <p className="text-finance-muted text-sm">
+                  {portfolio.holdings.length} {portfolio.holdings.length === 1 ? 'stock held' : 'stocks held'}
+                </p>
               </div>
 
+              {portfolio.holdings.length >= 2 && (
+                <button 
+                  className="btn-primary py-2 px-6 text-xs h-auto flex items-center gap-2" 
+                  onClick={handleRunClustering} 
+                  disabled={isClustering}
+                >
+                  <svg className={`w-4 h-4 ${isClustering ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  {isClustering ? 'Analyzing...' : 'Refresh AI Analysis'}
+                </button>
+              )}
             </div>
+          </div>
+
+          <div className="p-6 border-b border-white/5 bg-white/[0.01] flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Ticker (e.g. RELIANCE)"
+              value={addSymbol}
+              onChange={(e) => setAddSymbol(e.target.value.toUpperCase())}
+              className="glass-input w-44"
+            />
+            <input
+              type="number"
+              min="1"
+              value={addQuantity}
+              onChange={(e) => setAddQuantity(e.target.value)}
+              className="glass-input w-28"
+            />
+            <button
+              onClick={async () => {
+                if (!addSymbol || Number(addQuantity) <= 0) return;
+                setAddingAsset(true);
+                try {
+                  await api.post('/portfolio/transactions/', {
+                    portfolio: Number(id),
+                    symbol: addSymbol,
+                    quantity: Number(addQuantity),
+                    action: 'BUY'
+                  });
+                  setAddSymbol('');
+                  setAddQuantity('1');
+                  fetchPortfolio();
+                } catch (err) {
+                  setError(err?.response?.data?.error || err?.response?.data?.detail || 'Add asset failed');
+                } finally {
+                  setAddingAsset(false);
+                }
+              }}
+              className="btn-primary py-2 px-4"
+              disabled={addingAsset}
+            >
+              {addingAsset ? 'Adding...' : 'Add Asset'}
+            </button>
           </div>
 
           <table className="modern-table">
@@ -181,18 +240,18 @@ export default function PortfolioDetailsPage() {
                   <td className="text-center">
                     <div className="flex items-center justify-center gap-2 text-[10px]">
                       <button 
-                        className="px-4 py-1.5 rounded-lg bg-rose-500/10 text-rose-500 font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20" 
+                        className="px-4 py-1.5 rounded-lg bg-rose-500/10 text-rose-500 font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed" 
                         onClick={() => handleSell(holding.symbol, holding.quantity)}
-                        disabled={submitting}
+                        disabled={submitting || portfolio.is_default}
                       >
                         SELL
                       </button>
-                      <button className="text-finance-muted hover:text-rose-400 transition-colors uppercase font-bold tracking-widest text-[8px]" onClick={async () => {
+                      <button className="text-finance-muted hover:text-rose-400 transition-colors uppercase font-bold tracking-widest text-[8px] disabled:opacity-50 disabled:cursor-not-allowed" onClick={async () => {
                         if (window.confirm("Delete this entire holding entry?")) {
                           await api.delete(`/portfolio/holdings/${holding.id}/`);
                           fetchPortfolio();
                         }
-                      }}>Liquidate</button>
+                      }} disabled={portfolio.is_default}>Liquidate</button>
                     </div>
                   </td>
                 </tr>
@@ -209,31 +268,42 @@ export default function PortfolioDetailsPage() {
         </section>
 
         {clusters.length > 0 && (
-          <section className="glass-card p-8 bg-finance-primary/5 border-finance-primary/20">
-            <h2 className="text-2xl font-black text-white tracking-tight mb-2">Clustering Intelligence</h2>
-            <p className="text-finance-muted text-sm mb-8 italic">Algorithmic categorization based on P/E Ratio, ROI, and Market Capitalization.</p>
+          <section className="glass-card p-8 bg-gradient-to-br from-finance-primary/10 to-finance-primary/5 border border-finance-primary/20">
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-white tracking-tight mb-2">AI-Powered Clustering Analysis</h2>
+              <p className="text-finance-muted text-sm italic">Your portfolio stocks are automatically grouped by similar characteristics (P/E Ratio, ROI, Market Cap)</p>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...new Set(clusters.map(c => c.cluster_label))].map(label => (
-                <div key={label} className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-finance-primary/30 transition-all">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-finance-primary/10 flex items-center justify-center text-finance-primary font-black">
-                      {label}
+              {[...new Set(clusters.map(c => c.cluster_label))].map(label => {
+                const groupClusters = clusters.filter(c => c.cluster_label === label);
+                return (
+                  <div key={label} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-finance-primary/40 transition-all group">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-xl bg-finance-primary/20 flex items-center justify-center text-finance-primary font-black text-lg group-hover:bg-finance-primary/30 transition-all">
+                        {label}
+                      </div>
+                      <div>
+                        <h3 className="font-black text-white uppercase tracking-widest text-xs">Group {label}</h3>
+                        <p className="text-finance-muted text-[10px] mt-1">{groupClusters.length} {groupClusters.length === 1 ? 'stock' : 'stocks'}</p>
+                      </div>
                     </div>
-                    <h3 className="font-black text-white uppercase tracking-widest text-xs">Tactical Group {label}</h3>
+                    <div className="space-y-2">
+                      {groupClusters.map(c => {
+                        const holding = portfolio.holdings.find(h => h.symbol === c.stock_symbol);
+                        return (
+                          <div key={c.id} className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 group-hover:border-finance-primary/20 transition-all">
+                            <div className="flex items-center justify-between">
+                              <span className="text-finance-primary font-black text-xs uppercase tracking-widest">{holding?.symbol || c.stock_symbol}</span>
+                              <span className="text-finance-muted text-[10px]">{holding?.name}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {clusters.filter(c => c.cluster_label === label).map(c => {
-                      const stockDetails = portfolio.holdings.find(h => h.symbol === c.stock_symbol) || { symbol: `ID: ${c.stock}` };
-                      return (
-                        <span key={c.id} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-finance-primary uppercase tracking-widest">
-                          {stockDetails.symbol}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

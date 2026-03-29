@@ -1,3 +1,0 @@
-symbol,market_price,previous_close,volume,updated_at
-MOCK_STOCK_1.NS,100.0,95.0,1000,2026-03-26T04:40:31.464337+00:00
-MOCK_STOCK_2,50.0,52.0,500,2026-03-26T04:40:31.464351+00:00

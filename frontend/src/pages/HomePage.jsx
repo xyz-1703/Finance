@@ -1,293 +1,350 @@
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Search, Filter, TrendingUp, TrendingDown, ArrowRight, 
+  BarChart3, Shield, Zap, Globe, Cpu, Clock, 
+  ExternalLink
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import api from '../api/client';
 
-export default function HomePage() {
+const HomePage = () => {
   const navigate = useNavigate();
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('All');
+  const [mlModel, setMlModel] = useState('LSTM');
 
-  const marketData = [
-    { name: 'NIFTY 50', value: '22,453.30', change: '+0.15%' },
-    { name: 'SENSEX', value: '73,953.31', change: '+0.12%' },
-    { name: 'BANKNIFTY', value: '47,286.90', change: '-0.32%' },
-    { name: 'FINNIFTY', value: '20,892.15', change: '-0.10%' },
+  const tabs = ['All', 'India', 'US', 'Crypto', 'AI', 'Bank', 'EV', 'Tech', 'SaaS', 'Food', 'Semi', 'Solar', 'Power'];
+
+  useEffect(() => {
+    const fetchStocks = async () => {
+      try {
+        const res = await api.get('/stocks/stocks/');
+        const results = res.data.results || res.data;
+        setStocks(results);
+      } catch (err) {
+        console.error("Failed to fetch stocks:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStocks();
+  }, []);
+
+  const filteredStocks = stocks.filter(s => {
+    const matchesSearch = s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          s.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesTab = true;
+    if (activeTab === 'India') {
+      matchesTab = s.market?.includes('NSE') || s.market?.includes('BSE');
+    } else if (activeTab === 'US') {
+      matchesTab = s.market?.includes('NASDAQ') || s.market?.includes('NYSE');
+    } else if (activeTab === 'Crypto') {
+      matchesTab = s.market?.includes('CRYPTO');
+    } else if (activeTab !== 'All') {
+      // Basic sector/name filtering for other tabs
+      matchesTab = s.sector?.toLowerCase().includes(activeTab.toLowerCase()) || 
+                   s.name?.toLowerCase().includes(activeTab.toLowerCase());
+    }
+    
+    return matchesSearch && matchesTab;
+  });
+
+  const chartDataLSTM = [
+    { name: '10:00', value: 3400 },
+    { name: '11:00', value: 3600 },
+    { name: '12:00', value: 3200 },
+    { name: '13:00', value: 3800 },
+    { name: '14:00', value: 4100 },
+    { name: '15:00', value: 4300 },
+    { name: '16:00', value: 4500 },
   ];
 
+  const chartDataXGB = [
+    { name: '10:00', value: 3300 },
+    { name: '11:00', value: 3450 },
+    { name: '12:00', value: 3400 },
+    { name: '13:00', value: 3700 },
+    { name: '14:00', value: 3950 },
+    { name: '15:00', value: 4400 },
+    { name: '16:00', value: 4650 },
+  ];
+
+  const activeChartData = mlModel === 'LSTM' ? chartDataLSTM : chartDataXGB;
+
   return (
-    <div className="min-h-screen bg-[#ffffff] font-sans text-[#44475b] overflow-x-hidden">
-      {/* 1. Header / Navbar */}
-      <header className="w-full h-[72px] bg-white flex items-center justify-between px-6 md:px-12 sticky top-0 z-50 shadow-sm border-b border-[#e2e8f0]">
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2 text-2xl font-black text-[#1e293b] tracking-tight hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00d09c] to-[#00b889] flex items-center justify-center shadow-md">
-              <span className="text-white text-lg font-bold">Q</span>
+    <div className="flex flex-col bg-main-bg text-main-text">
+      {/* Stocks List Section */}
+      <section className="bg-main-bg/50 py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
+            <div>
+              <h2 className="text-4xl font-bold text-main-text mb-2">
+                400 stocks, <span className="font-serif italic text-accent-gold">two markets</span>
+              </h2>
             </div>
-            QuantVista
-          </Link>
-          
-          <div className="hidden md:flex gap-6 items-center">
-            <Link to="/market-home" className="text-[#44475b] hover:text-[#00d09c] font-bold text-[15px] transition-colors">
-              Stocks
-            </Link>
-            <Link to="/ml" className="text-[#44475b] hover:text-[#00d09c] font-bold text-[15px] transition-colors">
-              AI & ML
-            </Link>
-            <Link to="/dashboard" className="text-[#44475b] hover:text-[#00d09c] font-bold text-[15px] transition-colors">
-              Portfolios
-            </Link>
-          </div>
-          
-          {/* Subtle Search Bar mimic */}
-          <div className="hidden lg:flex items-center bg-[#f7f9fa] border border-[#e2e8f0] rounded-xl px-4 py-2 w-[400px] focus-within:bg-white focus-within:border-[#00d09c] focus-within:shadow-sm focus-within:ring-1 focus-within:ring-[#00d09c] transition-all">
-            <svg className="w-5 h-5 text-[#8b94a5] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input 
-              type="text" 
-              placeholder="What are you looking for today?" 
-              className="bg-transparent border-none outline-none w-full text-sm text-[#1e293b] placeholder-[#8b94a5]"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 md:gap-6">
-          <button 
-            onClick={() => navigate('/login')}
-            className="hidden sm:block bg-[#00d09c] hover:bg-[#00b889] text-white px-6 py-2.5 rounded-xl font-bold text-[15px] shadow-sm transition-all duration-300"
-          >
-            Login/Register
-          </button>
-        </div>
-      </header>
-
-      {/* 2. Market Strip */}
-      <div className="w-full bg-white border-b border-[#e2e8f0] py-4 overflow-x-auto whitespace-nowrap hide-scrollbar flex items-center justify-center gap-8 px-6 hidden sm:flex">
-        {marketData.map((data, idx) => (
-          <div key={idx} className="flex flex-col items-center min-w-max">
-            <span className="text-[11px] font-bold text-[#8b94a5] uppercase tracking-wider">{data.name}</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-[#1e293b]">{data.value}</span>
-              <span className={`text-xs font-bold ${data.change.startsWith('+') ? 'text-[#00d09c]' : 'text-rose-500'}`}>
-                {data.change}
-              </span>
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input 
+                type="text" 
+                placeholder="Search ticker, name..."
+                className="glass-input"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* 3. Hero Section */}
-      <main className="w-full max-w-[1200px] mx-auto pt-16 md:pt-24 px-6 md:px-12 flex flex-col items-center">
-        <h1 className="text-[44px] sm:text-[56px] md:text-[64px] font-black text-[#1e293b] text-center leading-[1.1] tracking-[-0.04em] mb-8">
-          QuantVista
-        </h1>
-        
-        <button 
-          onClick={() => navigate('/login')}
-          className="bg-[#00d09c] hover:bg-[#00b889] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-[0_8px_20px_rgba(0,208,156,0.3)] hover:-translate-y-1 transition-all duration-300 transform active:scale-95 mb-16"
-        >
-          Get Started
-        </button>
-
-        <div className="w-full max-w-[900px] mx-auto flex justify-center items-center relative mb-24 min-h-[400px]">
-           {/* Fallback to CSS geometric shapes if image fails, otherwise image */}
-           <img 
-              src="/images/hero_illustration.png" 
-              alt="Isometric Financial Illustration" 
-              className="w-full h-auto drop-shadow-2xl z-10"
-              onError={(e) => {
-                 e.target.style.display = 'none';
-                 e.target.nextSibling.style.display = 'flex';
-              }}
-           />
-           {/* Fallback Graphic */}
-           <div className="hidden absolute inset-0 items-center justify-center bg-transparent z-0">
-              <div className="relative w-[600px] h-[400px]">
-                <div className="absolute bottom-10 left-10 w-64 h-48 bg-white border-2 border-[#e2e8f0] rounded-2xl shadow-xl transform skew-x-12 -rotate-12"></div>
-                <div className="absolute bottom-20 right-20 w-48 h-64 bg-[#f7f9fa] border border-[#e2e8f0] rounded-2xl shadow-lg transform -skew-x-12 rotate-12"></div>
-                <div className="absolute top-10 left-1/3 w-32 h-32 bg-emerald-500/10 border border-emerald-500/30 rounded-full shadow-sm"></div>
-                <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-blue-500/5 border border-blue-500/20 rounded-xl transform rotate-45"></div>
-              </div>
-           </div>
-        </div>
-
-        {/* 4. Fingertips Grid */}
-        <div className="w-full pb-24 text-center">
-            <h2 className="text-3xl font-black text-[#1e293b] tracking-tight mb-12">
-              India's stock market at your fingertips
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[1000px] mx-auto text-left">
-              
-              {/* Card 1: Stocks (Tall) */}
-              <div 
-                onClick={() => navigate('/market-home')}
-                className="bg-white rounded-3xl p-8 border border-[#e2e8f0]/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 cursor-pointer lg:row-span-2 group flex flex-col justify-between min-h-[400px]"
+          {/* Filter Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar scroll-smooth">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                  activeTab === tab 
+                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' 
+                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
               >
-                 <div>
-                    <h3 className="text-xl font-bold text-[#1e293b] mb-2 text-center group-hover:text-[#00d09c] transition-colors">Stocks</h3>
-                 </div>
-                 <div className="w-full flex-1 flex flex-col items-center justify-end">
-                    <div className="w-[80%] h-[300px] bg-gradient-to-t from-emerald-50 to-white border border-[#e2e8f0] rounded-t-2xl relative overflow-hidden flex flex-col items-center p-6">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                           <span className="text-blue-600 font-bold text-xs">RE</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reliance Energy</span>
-                        <span className="text-2xl font-black text-slate-800">₹732.32</span>
-                        {/* Mock Chart SVG */}
-                        <svg className="absolute bottom-0 left-0 w-full h-1/2 text-emerald-500 opacity-20" viewBox="0 0 100 50" preserveAspectRatio="none">
-                           <path d="M0,50 L0,40 L10,35 L20,45 L30,20 L40,30 L50,10 L60,25 L70,5 L80,15 L90,0 L100,20 L100,50 Z" fill="currentColor"></path>
-                        </svg>
-                        <svg className="absolute bottom-0 left-0 w-full h-1/2 text-emerald-500" viewBox="0 0 100 50" preserveAspectRatio="none">
-                           <path d="M0,40 L10,35 L20,45 L30,20 L40,30 L50,10 L60,25 L70,5 L80,15 L90,0 L100,20" fill="none" stroke="currentColor" strokeWidth="2"></path>
-                        </svg>
-                    </div>
-                 </div>
-              </div>
+                {tab}
+              </button>
+            ))}
+          </div>
 
-              {/* Card 2: AI & ML */}
-              <div 
-                 onClick={() => navigate('/ml')}
-                 className="bg-white rounded-3xl p-8 border border-[#e2e8f0]/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 cursor-pointer lg:col-span-2 group flex flex-col h-[220px]"
-              >
-                 <h3 className="text-xl font-bold text-[#1e293b] mb-2 text-center group-hover:text-[#00d09c] transition-colors">AI Predictions</h3>
-                 <p className="text-[#8b94a5] text-sm text-center mb-6">Cutting-edge models & forecasting algorithms</p>
-                 <div className="flex-1 flex items-center justify-center gap-6">
-                    <div className="w-16 h-16 bg-[#e0f7fa] rounded-2xl border border-[#b2ebf2] flex items-center justify-center shadow-sm">
-                       <svg className="w-8 h-8 text-[#00bcd4]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </div>
-                    <div className="w-16 h-16 bg-[#e8f5e9] rounded-2xl border border-[#c8e6c9] flex items-center justify-center shadow-sm">
-                       <svg className="w-8 h-8 text-[#4caf50]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    </div>
-                    <div className="w-16 h-16 bg-[#fff3e0] rounded-2xl border border-[#ffe0b2] flex items-center justify-center shadow-sm">
-                       <svg className="w-8 h-8 text-[#ff9800]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Card 3: Portfolios */}
-              <div 
-                 onClick={() => navigate('/dashboard')}
-                 className="bg-white rounded-3xl p-8 border border-[#e2e8f0]/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 cursor-pointer lg:col-span-2 group min-h-[260px] relative overflow-hidden"
-              >
-                  <h3 className="text-xl font-bold text-[#1e293b] mb-2 text-center group-hover:text-[#00d09c] transition-colors">Portfolios</h3>
-                  <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-[80%] h-[180px] bg-slate-50 border border-[#e2e8f0] rounded-t-2xl shadow-md p-4">
-                     {/* Mock Portfolio UI Inside */}
-                     <div className="flex justify-between items-center border-b border-[#e2e8f0] pb-2 mb-2">
-                         <span className="text-[10px] font-bold text-slate-400 uppercase">Growth Fund</span>
-                         <span className="text-xs font-bold text-emerald-500">+12.4%</span>
-                     </div>
-                     <div className="flex justify-between items-center border-b border-[#e2e8f0] pb-2 mb-2">
-                         <span className="text-[10px] font-bold text-slate-400 uppercase">Retirement Setup</span>
-                         <span className="text-xs font-bold text-emerald-500">+8.1%</span>
-                     </div>
-                     <div className="flex justify-between items-center">
-                         <span className="text-[10px] font-bold text-slate-400 uppercase">Tech Index</span>
-                         <span className="text-xs font-bold text-rose-500">-2.3%</span>
-                     </div>
-                  </div>
-              </div>
-            </div>
+          <div className="glass-panel overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-gray-500">
+                  <th className="px-8 py-6">Ticker</th>
+                  <th className="px-8 py-6">Name</th>
+                  <th className="px-8 py-6">Market</th>
+                  <th className="px-8 py-6">Price</th>
+                  <th className="px-8 py-6">24H Change</th>
+                  <th className="px-8 py-6">Volume</th>
+                  <th className="px-8 py-6 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {loading ? (
+                  Array(5).fill(0).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td colSpan={7} className="px-8 py-6 h-20 bg-white/5" />
+                    </tr>
+                  ))
+                ) : filteredStocks.slice(0, 10).map((stock) => (
+                  <tr key={stock.id} className="hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => navigate(`/stock/${stock.symbol}`)}>
+                    <td className="px-8 py-6 font-bold text-white text-lg">{stock.symbol}</td>
+                    <td className="px-8 py-6 text-gray-400">{stock.name}</td>
+                    <td className="px-8 py-6">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        stock.market.includes('NSE') ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : 
+                        stock.market.includes('CRYPTO') ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 
+                        'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                      }`}>
+                        {stock.market}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-white font-semibold">₹{stock.latest_price ? parseFloat(stock.latest_price).toLocaleString() : 'N/A'}</td>
+                    <td className="px-8 py-6">
+                      <span className={`flex items-center gap-1 font-bold ${parseFloat(stock.discount || 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                        {parseFloat(stock.discount || 0) >= 0 ? '+' : ''}{stock.discount || 0}%
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-gray-500">12.4M</td>
+                    <td className="px-8 py-6 text-right">
+                      <Link to={`/stock/${stock.symbol}`} className="text-primary-500 font-bold hover:underline">View Detail</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </section>
 
-        {/* 5. SIP / Automate Section */}
-        <div className="w-full pb-32 text-center mt-12 bg-pattern overflow-hidden relative">
-            <h2 className="text-3xl font-black text-[#1e293b] tracking-tight mb-4">
-              Build wealth, Algorithm by Algorithm
-            </h2>
-            <p className="text-slate-500 text-lg mb-8">Invest in Quantitative Portfolios with precision.</p>
-            <button 
-              onClick={() => navigate('/login')}
-              className="bg-white border border-[#e2e8f0] hover:border-[#00d09c] hover:text-[#00d09c] text-[#1e293b] px-8 py-3 rounded-xl font-bold shadow-sm hover:shadow-md transition-all duration-300"
-            >
-              Learn automated investing
-            </button>
-
-            {/* Faint Grid Background mimic */}
-            <div className="absolute inset-0 z-[-1] opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px'}}></div>
-        </div>
-
-        {/* 6. Education / Language Section */}
-        <div className="w-full pb-24 border-t border-[#e2e8f0] pt-24 overflow-hidden">
-            <h2 className="text-3xl font-black text-[#1e293b] tracking-tight mb-12 text-center lg:text-left lg:px-12">
-              Finance simplified, for your logic.
-            </h2>
-            
-            {/* Horizontal Scroll */}
-            <div className="flex overflow-x-auto gap-6 pb-8 hide-scrollbar px-6 lg:px-12">
-               {[
-                 { title: "Market Insights", color: "from-blue-900 to-slate-900" },
-                 { title: "Advanced Quant", color: "from-emerald-900 to-slate-900" },
-                 { title: "Risk Paradigms", color: "from-indigo-900 to-slate-900" },
-                 { title: "Model Reviews", color: "from-rose-900 to-slate-900" },
-                 { title: "Trading Logic", color: "from-amber-900 to-slate-900" },
-               ].map((item, idx) => (
-                  <div key={idx} className={`min-w-[280px] h-[360px] rounded-[2rem] bg-gradient-to-br ${item.color} p-8 flex flex-col justify-end relative overflow-hidden group hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2`}>
-                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
-                     <h3 className="text-white text-2xl font-black relative z-10">{item.title}</h3>
-                  </div>
-               ))}
-            </div>
-        </div>
-      </main>
-
-      {/* 7. Footer */}
-      <footer className="w-full bg-[#151a22] pt-16 pb-8 px-6 md:px-12 text-slate-300 font-sans">
-         <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-12">
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 text-2xl font-black text-white tracking-tight mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00d09c] to-[#00b889] flex items-center justify-center">
-                    <span className="text-white text-lg font-bold">Q</span>
-                  </div>
-                  QuantVista
+      {/* ML Predict Section */}
+      <section className="py-24 px-4 bg-main-bg">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold text-main-text mb-12">
+            ML models that <span className="text-accent-gold italic font-serif">predict the move</span>
+          </h2>
+          <div className="grid md:grid-cols-3 gap-12 items-center">
+            <div className="md:col-span-2 glass-panel p-8 h-[400px]">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-xl font-bold text-white">{mlModel} Architecture</h3>
+                  <p className="text-gray-500 text-sm italic">Confidence level: {mlModel === 'LSTM' ? '84%' : '81%'}</p>
                 </div>
-                <p className="text-sm text-slate-400">Vaishnavi Tech Park, South Tower<br/>Sarjapur Main Road, Bengaluru, 560103</p>
-                <div className="flex items-center gap-4 pt-4">
-                   <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#00d09c] hover:text-white transition-colors">in</div>
-                   <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#00d09c] hover:text-white transition-colors">X</div>
-                   <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#00d09c] hover:text-white transition-colors">▶</div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setMlModel('LSTM')}
+                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${mlModel === 'LSTM' ? 'bg-primary-600 text-white' : 'bg-white/5 text-gray-500 hover:bg-white/10'}`}>
+                    LSTM
+                  </button>
+                  <button 
+                    onClick={() => setMlModel('XGBoost')}
+                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${mlModel === 'XGBoost' ? 'bg-primary-600 text-white' : 'bg-white/5 text-gray-500 hover:bg-white/10'}`}>
+                    XGBoost
+                  </button>
                 </div>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={activeChartData}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                    <XAxis dataKey="name" hide />
+                    <YAxis hide domain={['dataMin - 500', 'dataMax + 500']} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#13131a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
+            <div className="space-y-8">
+              <div className="glass-card p-6">
+                <h4 className="text-white font-bold mb-2">{mlModel}</h4>
+                <p className="text-gray-500 text-sm">
+                  {mlModel === 'LSTM' 
+                    ? 'Sequence models optimized for AAPL and NSE Bluechip temporal patterns.' 
+                    : 'Tree-based ensemble evaluating 150+ intraday volatility features.'}
+                </p>
+              </div>
+              <div className="flex justify-center flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-4 border-primary-500 flex items-center justify-center mb-4">
+                  <span className="text-2xl font-bold text-white">{mlModel === 'LSTM' ? '84.2%' : '81.7%'}</span>
+                </div>
+                <p className="text-white font-bold">Model Accuracy</p>
+              </div>
+              <button className="w-full btn-primary">Start Deep Sentiment Analysis</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="space-y-4">
-               <h4 className="text-white font-bold mb-6 text-sm">PRODUCTS</h4>
-               <ul className="space-y-3 text-sm text-slate-400">
-                  <li className="hover:text-white cursor-pointer transition-colors">Stocks</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Mutual Funds</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Trade Desk</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">AI Models</li>
-               </ul>
+      {/* Risk Clusters Section */}
+      <section className="py-24 px-4 bg-main-bg/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-20 items-center">
+            <div>
+              <h2 className="text-4xl font-bold text-main-text mb-6">
+                K-Means clusters <br />
+                <span className="text-accent-gold italic font-serif">your risk</span>
+              </h2>
+              <p className="text-gray-400 mb-8">
+                Get distance to center points across your portfolio assets. Know exactly where your risk concentrations lay at a glance.
+              </p>
+              <div className="space-y-4">
+                {['Low Risk', 'Medium Risk', 'High Risk'].map((risk, i) => (
+                  <div key={risk} className="glass-panel p-4 flex justify-between items-center group cursor-pointer hover:bg-white/5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${i === 0 ? 'bg-success' : i === 1 ? 'bg-accent-gold' : 'bg-danger'}`} />
+                      <span className="text-white font-semibold">{risk}</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                  </div>
+                ))}
+              </div>
             </div>
+            <div className="glass-panel p-8 aspect-square relative flex items-center justify-center">
+              {/* Mock Scatter Plot */}
+              <div className="grid grid-cols-4 grid-rows-4 w-full h-full opacity-30">
+                {Array(16).fill(0).map((_, i) => (
+                  <div key={i} className="border-t border-l border-white/5" />
+                ))}
+              </div>
+              <motion.div 
+                className="absolute inset-0 p-12 overflow-hidden"
+              >
+                {[
+                  { x: '20%', y: '70%', c: 'bg-success' },
+                  { x: '24%', y: '68%', c: 'bg-success' },
+                  { x: '18%', y: '74%', c: 'bg-success' },
+                  { x: '40%', y: '50%', c: 'bg-accent-gold' },
+                  { x: '45%', y: '48%', c: 'bg-accent-gold' },
+                  { x: '38%', y: '55%', c: 'bg-accent-gold' },
+                  { x: '70%', y: '20%', c: 'bg-danger' },
+                  { x: '75%', y: '25%', c: 'bg-danger' },
+                ].map((dot, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    style={{ left: dot.x, top: dot.y }}
+                    className={`absolute w-4 h-4 rounded-full ${dot.c} blur-[2px]`}
+                  />
+                ))}
+              </motion.div>
+              <div className="absolute flex flex-col items-center">
+                <Shield className="w-12 h-12 text-primary-500 mb-4 opacity-50" />
+                <p className="text-gray-500 font-semibold tracking-widest text-xs uppercase">Portfolio Risk Grid</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="space-y-4">
-               <h4 className="text-white font-bold mb-6 text-sm">QUANTVISTA</h4>
-               <ul className="space-y-3 text-sm text-slate-400">
-                  <li className="hover:text-white cursor-pointer transition-colors">About Us</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Pricing</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Blog</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Careers</li>
-               </ul>
-            </div>
+      {/* Features Grid */}
+      <section className="py-24 px-4 bg-main-bg">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-muted-text uppercase tracking-[0.2em] text-xs font-bold mb-4">A Growth Platform</h2>
+            <h3 className="text-4xl font-bold text-main-text">Built for the <span className="text-accent-gold font-serif italic">serious investor</span></h3>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: 'AI Driven', icon: <Cpu />, desc: 'Real-time stock news sentiment and prediction models.' },
+              { title: 'API Integration', icon: <Globe />, desc: 'Connect with any broker and pull real-time portfolio data.' },
+              { title: 'Technical Signals', icon: <BarChart3 />, desc: 'Advanced indicators like RSI, MACD, and Bollinger Bands.' },
+              { title: 'Risk Control', icon: <Shield />, desc: 'K-Means clustering and sector concentration alerts.' },
+              { title: 'High Speed', icon: <Zap />, desc: 'Ultra low latency data streaming from global markets.' },
+              { title: 'Smart Reports', icon: <Clock />, desc: 'Automated daily research briefs tailored to you.' },
+            ].map((feature, i) => (
+              <div key={i} className="glass-card p-10 hover:border-white/10 group">
+                <div className="w-12 h-12 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  {React.cloneElement(feature.icon, { className: 'w-6 h-6' })}
+                </div>
+                <h4 className="text-xl font-bold text-white mb-2">{feature.title}</h4>
+                <p className="text-gray-500 leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <div className="space-y-4">
-               <h4 className="text-white font-bold mb-6 text-sm">QUICK LINKS</h4>
-               <ul className="space-y-3 text-sm text-slate-400">
-                  <li className="hover:text-white cursor-pointer transition-colors">Help & Support</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Trust & Safety</li>
-                  <li className="hover:text-white cursor-pointer transition-colors">Investor Relations</li>
-               </ul>
+      {/* Final CTA */}
+      <section className="py-24 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="relative rounded-3xl overflow-hidden p-16 text-center">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1d4ed8] to-[#1e1b4b]" />
+            <div className="relative z-10">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Start your edge today</h2>
+              <p className="text-blue-100/70 text-lg mb-10 max-w-2xl mx-auto">
+                Join thousands of institutional-grade traders using QuantVista for clinical precision in Indian and US markets.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Link to="/register" className="btn-gold">Open Free Account</Link>
+                <button className="btn-outline border-white/20 hover:bg-white/10">Explore Demo</button>
+              </div>
             </div>
-         </div>
-
-         <div className="max-w-[1200px] mx-auto pt-8 text-xs text-slate-500 leading-relaxed space-y-4">
-            <p>QuantVista is a technology platform, not a registered broker-dealer or investment advisor. All investments involve risk, and the past performance of a security or financial product does not guarantee future results or returns. Keep in mind that while diversification may help spread risk, it does not assure a profit or protect against loss. There is always the potential of losing money when you invest in securities or other financial products. Investors should consider their investment objectives and risks carefully before investing.</p>
-            <div className="flex justify-between items-center pt-8 border-t border-white/10">
-               <span>&copy; {new Date().getFullYear()} QuantVista. All rights reserved.</span>
-               <div className="flex gap-4">
-                 <span className="hover:text-white cursor-pointer">Terms</span>
-                 <span className="hover:text-white cursor-pointer">Privacy</span>
-                 <span className="hover:text-white cursor-pointer">Security</span>
-               </div>
-            </div>
-         </div>
-      </footer>
+          </div>
+        </div>
+      </section>
     </div>
   );
-}
+};
+
+export default HomePage;

@@ -50,7 +50,15 @@ class RegisterView(APIView):
 
         email = serializer.validated_data["email"]
         username = serializer.validated_data.get("username") or email
+        import uuid
         telegram_id = serializer.validated_data.get("telegram_id")
+        if not telegram_id:
+            dummy_id = f"unlinked_{uuid.uuid4().hex[:12]}"
+            telegram_username = dummy_id
+            telegram_chat_id = dummy_id
+        else:
+            telegram_username = telegram_id
+            telegram_chat_id = telegram_id
 
         user = User.objects.create_user(
             email=email,
@@ -58,8 +66,8 @@ class RegisterView(APIView):
             password=serializer.validated_data["password"],
             first_name=serializer.validated_data.get("first_name", ""),
             last_name=serializer.validated_data.get("last_name", ""),
-            telegram_username=telegram_id,
-            telegram_chat_id=telegram_id, # Assuming chat_id = username initially if not resolved
+            telegram_username=telegram_username,
+            telegram_chat_id=telegram_chat_id,
         )
         refresh = RefreshToken.for_user(user)
         return Response(

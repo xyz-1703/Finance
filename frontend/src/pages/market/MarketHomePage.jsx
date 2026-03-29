@@ -55,20 +55,21 @@ export default function MarketHomePage() {
   };
 
   return (
-    <main className="app-shell animate-fade-in bg-white min-h-screen">
-      <section className="bg-[#f7f9fa] rounded-3xl p-10 mb-8 flex flex-col md:flex-row justify-between items-center gap-8 border border-slate-200">
-        <div className="max-w-2xl">
+    <main className="app-shell animate-fade-in pb-24 mt-10">
+      <section className="glass-card p-10 mb-8 flex flex-col md:flex-row justify-between items-center gap-8 border-finance-primary/10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-finance-primary/5 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="max-w-2xl relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">NSE Equities</span>
-            <span className="text-slate-400 text-xs font-mono uppercase tracking-widest">Real-time Feed</span>
+            <span className="badge badge-primary">NSE Equities</span>
+            <span className="text-finance-primary text-xs font-mono uppercase tracking-widest font-black">Real-time Feed</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-slate-800">Market Screener</h1>
-          <p className="text-slate-500 text-lg leading-relaxed">
-            Live watchlist powered by <span className="text-slate-900 font-medium italic">yfinance</span>. Analyze trends, statistics, and 
-            <span className="text-emerald-500 font-semibold"> FinBERT </span> sentiment scores for Indian stocks.
+          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter text-white">Market Screener</h1>
+          <p className="text-finance-muted text-sm leading-relaxed uppercase tracking-widest font-bold text-[10px]">
+            Live watchlist powered by <span className="text-white font-black">yfinance</span>. Analyze trends, statistics, and 
+            <span className="text-finance-success font-black ml-1">FinBERT</span> sentiment scores for Indian stocks.
           </p>
         </div>
-        <div className="flex flex-col sm:row gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:row gap-4 w-full md:w-auto relative z-10">
           <div className="relative group">
             <input
               type="text"
@@ -97,14 +98,14 @@ export default function MarketHomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-50 border border-slate-200 p-2 mb-8 rounded-2xl flex flex-wrap gap-2">
+      <section className="glass-card p-2 mb-8 flex flex-wrap gap-2">
         {sectors.map((item) => (
           <button
             key={item}
-            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${
               item === sector 
-                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                : "text-slate-400 hover:text-slate-800 hover:bg-white"
+                ? "bg-finance-primary text-white shadow-lg shadow-finance-primary/20" 
+                : "text-finance-muted hover:text-white hover:bg-white/5"
             }`}
             onClick={() => setSector(item)}
           >
@@ -113,82 +114,85 @@ export default function MarketHomePage() {
         ))}
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <section className="glass-card overflow-hidden">
         {error ? (
-          <div className="p-8 bg-rose-50 border-b border-rose-100 text-rose-500 flex items-center gap-3">
+          <div className="p-8 bg-finance-danger/5 border-b border-finance-danger/20 text-finance-danger flex items-center gap-3 font-black uppercase tracking-widest text-sm">
              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
              {error}
           </div>
         ) : null}
         
-        <table className="w-full border-separate border-spacing-0">
-          <thead>
-            <tr className="bg-slate-50">
-              <th className="pl-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Asset Symbol</th>
-              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Authority Name</th>
-              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">P/E</th>
-              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Discount</th>
-              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Signal</th>
-              <th className="py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Market</th>
-              <th className="text-right pr-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">Order Control</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStocks.map((item) => (
-              <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
-                <td className="pl-6 py-5 border-b border-slate-100">
-                   <span className="text-emerald-500 font-black tracking-tighter text-lg">{item.symbol}</span>
-                </td>
-                <td className="border-b border-slate-100">
-                   <div className="text-slate-800 font-bold text-sm">{item.name}</div>
-                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.sector || 'General'}</div>
-                </td>
-                <td className="border-b border-slate-100">
-                   <span className="text-slate-600 font-mono text-xs">{item.pe_ratio || '-'}</span>
-                </td>
-                <td>
-                   <div className="flex flex-col">
-                      <span className="text-emerald-400 font-black text-xs">-{item.discount}%</span>
-                      <span className="text-[9px] text-finance-muted uppercase font-bold tracking-tighter italic">From 52W High</span>
-                   </div>
-                </td>
-                <td>
-                   <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${
-                     item.analysis === 'Deep Discount' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/5' :
-                     item.analysis === 'Value Pick' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
-                     item.analysis === 'All Time High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                     'bg-white/5 text-finance-muted border-white/5'
-                   }`}>
-                     {item.analysis}
-                   </span>
-                </td>
-                <td>
-                  <span className="badge bg-white/5 text-finance-muted text-[10px] font-bold border border-white/5 uppercase opacity-60">
-                    {item.market}
-                  </span>
-                </td>
-                <td className="pr-6 text-right">
-                    <div className="flex items-center justify-end">
-                       <Link 
-                         to={`/trade?stock_id=${item.id}&side=BUY`} 
-                         className="px-6 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 hover:text-white transition-all border border-emerald-500/20 w-full text-center"
-                       >
-                         Initalize Buy
-                       </Link>
-                    </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-white/[0.02]">
+                <th className="px-6 py-5 text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">Asset Symbol</th>
+                <th className="px-6 py-5 text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">Authority Name</th>
+                <th className="px-6 py-5 text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">P/E</th>
+                <th className="px-6 py-5 text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">Discount</th>
+                <th className="px-6 py-5 text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">Signal</th>
+                <th className="px-6 py-5 text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">Market</th>
+                <th className="px-6 py-5 text-right text-[10px] font-bold text-finance-muted uppercase tracking-[0.2em] border-b border-white/5">Order Control</th>
               </tr>
-            ))}
-            {!filteredStocks.length && !loading ? (
-              <tr>
-                <td colSpan={7} className="py-20 text-center text-finance-muted italic">
-                  No stocks found matching your search.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredStocks.map((item) => (
+                <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors">
+                  <td className="px-6 py-5 align-middle">
+                     <span className="text-finance-primary font-black tracking-tighter text-lg">{item.symbol}</span>
+                  </td>
+                  <td className="px-6 py-5 align-middle">
+                     <div className="text-white font-bold text-sm">{item.name}</div>
+                     <div className="text-[10px] text-finance-muted font-bold uppercase tracking-[0.2em]">{item.sector || 'General'}</div>
+                  </td>
+                  <td className="px-6 py-5 align-middle">
+                     <span className="text-finance-muted font-mono text-xs">{item.pe_ratio || '-'}</span>
+                  </td>
+                  <td className="px-6 py-5 align-middle">
+                     <div className="flex flex-col">
+                        <span className="text-finance-success font-black text-xs">-{item.discount}%</span>
+                        <span className="text-[9px] text-finance-muted/50 uppercase font-bold tracking-tighter italic">From 52W High</span>
+                     </div>
+                  </td>
+                  <td className="px-6 py-5 align-middle">
+                     <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${
+                       item.analysis === 'Deep Discount' ? 'bg-finance-success/10 text-finance-success border-finance-success/20 shadow-lg shadow-finance-success/5' :
+                       item.analysis === 'Value Pick' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
+                       item.analysis === 'All Time High' ? 'bg-finance-danger/10 text-finance-danger border-finance-danger/20' :
+                       'bg-white/5 text-finance-muted border-white/5'
+                     }`}>
+                       {item.analysis}
+                     </span>
+                  </td>
+                  <td className="px-6 py-5 align-middle">
+                    <span className="badge bg-white/5 text-finance-muted text-[10px] font-bold border border-white/5 uppercase opacity-60">
+                      {item.market}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5 align-middle text-right">
+                      <div className="flex items-center justify-end">
+                         <Link 
+                           to={`/trade?stock_id=${item.id}&side=BUY`} 
+                           className="px-6 py-2 rounded-xl bg-finance-success/10 text-finance-success text-[10px] font-black uppercase tracking-[0.2em] hover:bg-finance-success hover:text-[#07361b] transition-all border border-finance-success/20 w-full text-center"
+                         >
+                           Initialize Buy
+                         </Link>
+                      </div>
+                  </td>
+                </tr>
+              ))}
+              {!filteredStocks.length && !loading ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center text-finance-muted/50 font-bold tracking-widest uppercase text-xs">
+                    No stocks found matching your search query.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   );
 }
+

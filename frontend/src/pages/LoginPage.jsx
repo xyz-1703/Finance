@@ -1,127 +1,102 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/client';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { LogIn, Key, Mail, AlertCircle } from 'lucide-react';
 
-export default function LoginPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({ username: '', password: '' });
+const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/dashboard";
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
     try {
-      const response = await api.post('/auth/token/', {
-        email: formData.username, 
-        username: formData.username, 
-        password: formData.password
-      });
-      
-      localStorage.setItem('access_token', response.data.access);
-      if (response.data.refresh) {
-          localStorage.setItem('refresh_token', response.data.refresh);
-      }
-      if (response.data.user) {
-          localStorage.setItem('current_user', JSON.stringify(response.data.user));
-      }
-
-      window.dispatchEvent(new Event("auth-changed"));
-      navigate('/dashboard');
+      setError('');
+      setLoading(true);
+      await login(email, password);
+      navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid credentials');
+      setError('Failed to log in. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fa] flex flex-col font-sans" style={{ color: "var(--groww-text)" }}>
-      {/* Groww-style minimal top nav */}
-      <nav className="w-full h-[72px] bg-white border-b border-[#e2e8f0] flex items-center px-8 sm:px-12 sticky top-0 z-10 shadow-sm">
-        <Link to="/" className="flex items-center gap-2 text-2xl font-black text-[#1e293b] tracking-tight hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00d09c] to-[#00b889] flex items-center justify-center shadow-md">
-            <span className="text-white text-lg font-bold">S</span>
+    <div className="min-h-[80vh] flex items-center justify-center relative bg-main-bg text-main-text">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-600/20 rounded-full blur-[100px] pointer-events-none opacity-50"></div>
+      
+      <div className="glass-panel w-full max-w-md p-10 relative z-10 shadow-glass-strong">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-500/20 mb-6">
+            <LogIn className="w-7 h-7 text-white" />
           </div>
-          QuantVista
-        </Link>
-      </nav>
-
-      {/* Main Login Area */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#e2e8f0]/40 p-8 sm:p-10">
-          
-          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e293b] mb-2 tracking-tight">Welcome back</h1>
-          <p className="text-[15px] mb-8" style={{ color: "var(--groww-text)" }}>
-            Please enter your login details to access your dashboard.
-          </p>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            {error && (
-              <div className="p-4 rounded-xl bg-red-50 text-red-600 text-sm border border-red-100 font-medium">
-                {error}
-              </div>
-            )}
-            
-            <div className="space-y-1.5">
-              <label className="block text-[13px] font-semibold text-[#44475b] uppercase tracking-wide">
-                Username or Email
-              </label>
-              <input 
-                type="text" 
-                name="username"
-                className="w-full bg-white border border-[#e2e8f0] rounded-xl px-4 py-3.5 text-[#1e293b] placeholder-[#8b94a5] focus:outline-none focus:border-[#00d09c] focus:ring-1 focus:ring-[#00d09c] shadow-sm transition-all"
-                placeholder="Ex: user@example.com"
-                value={formData.username}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="block text-[13px] font-semibold text-[#44475b] uppercase tracking-wide">
-                  Password
-                </label>
-                <Link to="/forgot-password" className="text-sm font-semibold text-[#00d09c] hover:text-[#00b889] transition-colors">
-                  Forgot?
-                </Link>
-              </div>
-              <input 
-                type="password" 
-                name="password"
-                className="w-full bg-white border border-[#e2e8f0] rounded-xl px-4 py-3.5 text-[#1e293b] placeholder-[#8b94a5] focus:outline-none focus:border-[#00d09c] focus:ring-1 focus:ring-[#00d09c] shadow-sm transition-all text-lg tracking-[0.2em]"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-[#00d09c] hover:bg-[#00b889] text-white py-4 mt-2 rounded-xl text-lg font-bold shadow-lg shadow-[#00d09c]/20 hover:shadow-xl hover:shadow-[#00d09c]/30 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300"
-            >
-              {loading ? 'Authenticating...' : 'Secure Login'}
-            </button>
-          </form>
-          
-          <div className="mt-8 text-center border-t border-[#e2e8f0] pt-6">
-            <p className="text-[15px]" style={{ color: "var(--groww-text)" }}>
-              Don't have an account?{' '}
-              <Link to="/register" className="font-bold text-[#00d09c] hover:text-[#00b889] transition-colors">
-                Register here
-              </Link>
-            </p>
-          </div>
+          <h2 className="text-3xl font-bold text-main-text tracking-tight">Welcome Back</h2>
+          <p className="opacity-50 mt-2 font-medium">Access your QuantVista edge</p>
         </div>
-      </main>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-danger/10 border border-danger/20 flex items-center gap-3 text-danger">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wider">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-main-text opacity-50 uppercase tracking-widest ml-1">Email Address</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 opacity-40" />
+              </div>
+              <input
+                type="email" required className="glass-input pl-12" placeholder="you@example.com"
+                value={email} onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-main-text opacity-50 uppercase tracking-widest ml-1">Secure Password</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Key className="h-5 w-5 opacity-40" />
+              </div>
+              <input
+                type="password" required className="glass-input pl-12" placeholder="••••••••"
+                value={password} onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end mt-2">
+              <Link to="/forgot-password" shaking="true" className="text-[10px] font-bold text-primary-500 hover:underline uppercase tracking-widest">
+                Forgot password?
+              </Link>
+            </div>
+          </div>
+
+          <button
+            type="submit" disabled={loading}
+            className="w-full btn-primary py-4 flex justify-center items-center gap-3 font-bold uppercase tracking-widest text-xs"
+          >
+            {loading ? <span className="animate-spin text-xl">⏳</span> : 'Sign In'}
+          </button>
+        </form>
+
+        <p className="mt-10 text-center text-xs opacity-50 font-medium tracking-wide">
+          Don't have an account?{' '}
+          <Link to="/register" className="font-bold text-primary-500 hover:underline">
+            Create one
+          </Link>
+        </p>
+      </div>
     </div>
   );
-}
+};
+
+export default LoginPage;

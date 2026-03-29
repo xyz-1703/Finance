@@ -46,8 +46,8 @@ class PortfolioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Portfolio
-        fields = ("id", "user", "name", "sector", "is_automated", "target_allocation", "created_at", "holdings", "transactions", "total_value", "total_quantity", "profit_loss")
-        read_only_fields = ("user",)
+        fields = ("id", "user", "name", "description", "sector", "is_automated", "is_default", "target_allocation", "created_at", "holdings", "transactions", "total_value", "total_quantity", "profit_loss")
+        read_only_fields = ("user", "is_default")
 
     def get_total_value(self, obj):
         holdings = obj.holdings.all()
