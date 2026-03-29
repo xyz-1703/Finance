@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('portfolio', '0002_alter_portfolio_unique_together_and_more'),
+        ('stocks', '0001_initial'),
     ]
 
     operations = [
