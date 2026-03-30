@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const origin = typeof window !== "undefined" ? window.location.origin : "";
+const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+const fallbackBase = isLocal ? "http://localhost:8000/api" : `${origin}/api`;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || fallbackBase,
   headers: {
     'Content-Type': 'application/json',
   },
